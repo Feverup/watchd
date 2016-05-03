@@ -29,6 +29,7 @@ if __name__ == '__main__' :
     data2 = [ v*v for v in data ]
     sd  = math.sqrt( sum(data2) / n - mean*mean )
 
-    # For 10 values, the second point marks 20% percentile
-    minval = sorted(data)[1]
+    # As indexes start at 0, we use floor instead of ceil for percentile index
+    limit = int(math.floor( n * 0.2 ))
+    minval = sorted(data)[limit]
 
