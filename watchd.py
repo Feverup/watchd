@@ -25,6 +25,8 @@ if __name__ == '__main__' :
     instances = boto.ec2.connect_to_region("eu-west-1") \
                         .get_only_instances(in_service)
 
+    elb_data = array.array( 'f' )
+
     for hostname in [ str(i.private_dns_name.split('.')[0]) for i in instances ] :
 
         rrdfile = os.path.join( topdir , hostname , 'cpu-0' , 'cpu-idle.rrd' )
@@ -34,14 +36,14 @@ if __name__ == '__main__' :
         data = rrdtool.fetch( rrdfile, 'AVERAGE', '--resolution' , '60' ,
                               '--start' , '-10m' , '--end' , str(last) )
 
-        data = array.array( 'f' , [ d[0] for d in data[2] if d[0] ] )
+        elb_data.extend( [ d[0] for d in data[2] if d[0] ] )
 
-        n = len(data)
-        mean = sum(data) / n
-        data2 = [ v*v for v in data ]
-        sd  = math.sqrt( sum(data2) / n - mean*mean )
+    n = len(elb_data)
+    mean = sum(elb_data) / n
+    data2 = [ v*v for v in elb_data ]
+    sd  = math.sqrt( sum(data2) / n - mean*mean )
 
-        # As indexes start at 0, we use floor instead of ceil for percentile index
-        limit = int(math.floor( n * 0.2 ))
-        minval = sorted(data)[limit]
+    # As indexes start at 0, we use floor instead of ceil for percentile index
+    limit = int(math.floor( n * 0.2 ))
+    minval = sorted(elb_data)[limit]
 
