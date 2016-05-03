@@ -2,6 +2,8 @@
 
 import rrdtool
 
+import array
+import math
 import os
 
 topdir = '/var/lib/collectd/rrd/'
@@ -20,11 +22,13 @@ if __name__ == '__main__' :
     data = rrdtool.fetch( rrdfile, 'AVERAGE', '--resolution' , '60' ,
                          '--start' , '-10m' , '--end' , str(last) )
 
-    tstamp = data[0][0]
-    for d in data[2] :
-        tstamp += 60
-        if d[0] :
-            print "%s:  %.2f" % ( tstamp , d[0] )
-        else :
-            print "%s:  NaN" % tstamp
+    data = array.array( 'f' , [ d[0] for d in data[2] if d[0] ] )
+
+    n = len(data)
+    mean = sum(data) / n
+    data2 = [ v*v for v in data ]
+    sd  = math.sqrt( sum(data2) / n - mean*mean )
+
+    # For 10 values, the second point marks 20% percentile
+    minval = sorted(data)[1]
 
