@@ -31,7 +31,12 @@ if __name__ == '__main__' :
 
         rrdfile = os.path.join( topdir , hostname , 'cpu-0' , 'cpu-idle.rrd' )
 
-        info = rrdtool.info( rrdfile )
+        try :
+            info = rrdtool.info( rrdfile )
+        except Exception , ex :
+            print "ERROR %s" % ex
+            print "     ", dir(ex)
+            info = rrdtool.info( rrdfile )
         last = info['last_update'] - info['last_update'] % 60
         data = rrdtool.fetch( rrdfile, 'AVERAGE', '--resolution' , '60' ,
                               '--start' , '-10m' , '--end' , str(last) )
