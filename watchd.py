@@ -1,14 +1,18 @@
 #!/usr/bin/python
 
+from fevertools import recv
 import rrdtool
 
 import boto.ec2
 import boto.ec2.elb
 
+import socket
+
 import array
 import math
 import os
 
+unixsock = '/var/run/collectd-unixsock'
 topdir = '/var/lib/collectd/rrd/'
 
 if __name__ == '__main__' :
@@ -27,9 +31,21 @@ if __name__ == '__main__' :
 
     elb_data = array.array( 'f' )
 
+    sock = socket.socket( socket.AF_UNIX )
+    sock.connect( unixsock )
+
+    sock.send("LISTVAL\n")
+    listval = [ s.split() for s in recv(sock) ]
+    listval = dict( [ (b,a) for a,b in listval ] )
+
     for hostname in [ str(i.private_dns_name.split('.')[0]) for i in instances ] :
 
-        rrdfile = os.path.join( topdir , hostname , 'cpu-0' , 'cpu-idle.rrd' )
+        identifier = os.path.join( hostname , 'cpu-0' , 'cpu-idle' )
+        date = listval.get(identifier)
+        sock.send("GETVAL %s\n" % identifier)
+        data0 = recv(sock)
+
+        rrdfile = os.path.join( topdir , "%s.rrd" % identifier )
 
         try :
             info = rrdtool.info( rrdfile )
