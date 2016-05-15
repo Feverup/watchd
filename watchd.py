@@ -7,6 +7,7 @@ import boto.ec2
 import boto.ec2.elb
 
 import socket
+import time
 
 import array
 import math
@@ -17,9 +18,14 @@ topdir = '/var/lib/collectd/rrd/'
 
 if __name__ == '__main__' :
 
-    if len(os.sys.argv) != 2 :
-        print "Usage: %s elbname" % os.sys.argv[0].split('.')[-1]
-        os.sys.exit(2)
+  if len(os.sys.argv) != 2 :
+      print "Usage: %s elbname" % os.sys.argv[0].split('.')[-1]
+      os.sys.exit(2)
+
+  if os.fork() :
+      os.sys.exit(0)
+
+  while True :
 
     elbname = os.sys.argv[1]
     elb = boto.ec2.elb.connect_to_region("eu-west-1") \
@@ -67,4 +73,6 @@ if __name__ == '__main__' :
     # As indexes start at 0, we use floor instead of ceil for percentile index
     limit = int(math.floor( n * 0.2 ))
     minval = sorted(elb_data)[limit]
+
+    time.sleep(60)
 
