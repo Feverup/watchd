@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from fevertools import recv
+from fevertools import recv, aggregated_metric
 import rrdtool
 
 import boto.ec2
@@ -24,6 +24,8 @@ if __name__ == '__main__' :
 
   if os.fork() :
       os.sys.exit(0)
+
+  metrics = {}
 
   while True :
 
@@ -64,6 +66,10 @@ if __name__ == '__main__' :
                               '--start' , '-10m' , '--end' , str(last) )
 
         elb_data.extend( [ d[0] for d in data[2] if d[0] ] )
+
+        if not metrics.has_key(hostname) :
+            metrics[hostname] = aggregated_metric()
+        metrics[hostname][date] = float(data0.split('=')[1])
 
     n = len(elb_data)
     mean = sum(elb_data) / n
