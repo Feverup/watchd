@@ -22,7 +22,7 @@ class cpu ( dict ) :
     def __init__ ( self ) :
         dict.__init__( self )
         for attr in self.types :
-            self[attr] = None
+            self[attr] = float('nan')
 
     def summary ( self ) :
         return sum([self[v] for v in self.busy]) , self['idle'] , self['steal']
