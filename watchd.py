@@ -66,7 +66,7 @@ if __name__ == '__main__' :
         data = rrdtool.fetch( rrdfile, 'AVERAGE', '--resolution' , '60' ,
                               '--start' , '-10m' , '--end' , str(last) )
 
-        elb_data.extend( [ d[0] for d in data[2] if d[0] ] )
+        elb_data.extend( [ d[0] for d in data[2] if d[0] is not None ] )
 
         if not metrics.has_key(hostname) :
             metrics[hostname] = aggregated_metric()
