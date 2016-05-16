@@ -24,11 +24,12 @@ class cpu ( dict ) :
             self[attr] = None
 
     def __str__ ( self ) :
-        return ",".join( [ str(self[k]) for k in self.types ] )
+        return " ".join( [ "%5.2f" % self[k] for k in self.types ] )
 
 class aggregated_metric ( dict ) :
 
     def __init__ ( self , length=10 ) :
+        self.tstamp = None
         self.length = length
         dict.__init__( self )
 
@@ -41,10 +42,14 @@ class aggregated_metric ( dict ) :
     def __setitem__ ( self , key , ( metric_instance , value ) ) :
         date = "%d" % float(key)
         if not self.has_key(date) :
+            self.tstamp = date
             dict.__setitem__( self , date , cpu() )
         self[date][metric_instance] = value
         if len(self) > self.length :
             self.unshift()
+
+    def last ( self ) :
+        return self[self.tstamp]
 
     def __str__ ( self ) :
         return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
