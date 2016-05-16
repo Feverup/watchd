@@ -60,6 +60,9 @@ class aggregated_metric ( dict ) :
             for i in range(3) :
                 data[i].append( items[i] )
 
+    def full ( self ) :
+        return len(self) == self.length
+
     def last ( self ) :
         return self[self.tstamp]
 

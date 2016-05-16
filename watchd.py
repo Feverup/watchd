@@ -39,6 +39,7 @@ if __name__ == '__main__' :
     sock.connect( unixsock )
 
     date = time.time()
+    full = True
 
     for hostname in [ str(i.private_dns_name.split('.')[0]) for i in instances ] :
 
@@ -52,11 +53,15 @@ if __name__ == '__main__' :
         data = recv(sock)
         metrics[hostname][date] = metric_instance , float(data.split('=')[1])
 
-    elb_data = array.array( 'f' ) , array.array( 'f' ) , array.array( 'f' )
-    for h in metrics :
+      if not metrics[hostname].full() :
+          full = False
+
+    if full :
+      elb_data = array.array( 'f' ) , array.array( 'f' ) , array.array( 'f' )
+      for h in metrics :
         metrics[h].push( elb_data )
 
-    for i in range(3) :
+      for i in range(3) :
         n = len(elb_data[i])
         mean = sum(elb_data[i]) / n
         data2 = [ v*v for v in elb_data[i] ]
