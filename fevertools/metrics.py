@@ -14,6 +14,18 @@ def recv( sock , buffsize=1024 ) :
         size -= len(buff.split('\n'))
     return data.split('\n')[1:-1]
 
+class cpu ( dict ) :
+
+    types = ('system', 'user', 'nice', 'wait', 'idle', 'interrupt', 'softirq', 'steal')
+
+    def __init__ ( self ) :
+        dict.__init__( self )
+        for attr in self.types :
+            self[attr] = None
+
+    def __str__ ( self ) :
+        return ",".join( [ str(self[k]) for k in self.types ] )
+
 class aggregated_metric ( dict ) :
 
     def __init__ ( self , length=10 ) :
@@ -26,8 +38,11 @@ class aggregated_metric ( dict ) :
         keys.reverse()
         return dict.pop(self, keys.pop())
 
-    def __setitem__ ( self , key , value ) :
-        dict.__setitem__( self , "%d"%float(key) , value )
+    def __setitem__ ( self , key , ( metric_instance , value ) ) :
+        date = "%d" % float(key)
+        if not self.has_key(date) :
+            dict.__setitem__( self , date , cpu() )
+        self[date][metric_instance] = value
         if len(self) > self.length :
             self.unshift()
 

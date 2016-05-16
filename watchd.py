@@ -48,7 +48,8 @@ if __name__ == '__main__' :
 
     for hostname in [ str(i.private_dns_name.split('.')[0]) for i in instances ] :
 
-        identifier = os.path.join( hostname , 'cpu-0' , 'cpu-idle' )
+      for metric_instance in ('system', 'user', 'nice', 'wait', 'idle', 'interrupt', 'softirq', 'steal') :
+        identifier = os.path.join( hostname , 'cpu-0' , 'cpu-%s' % metric_instance )
         date = listval.get(identifier)
         sock.send("GETVAL %s\n" % identifier)
         data0 = recv(sock)
@@ -69,7 +70,7 @@ if __name__ == '__main__' :
 
         if not metrics.has_key(hostname) :
             metrics[hostname] = aggregated_metric()
-        metrics[hostname][date] = float(data0.split('=')[1])
+        metrics[hostname][date] = metric_instance , float(data0.split('=')[1])
 
     n = len(elb_data)
     mean = sum(elb_data) / n
