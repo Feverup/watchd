@@ -46,30 +46,27 @@ if __name__ == '__main__' :
       if not metrics.has_key(hostname) :
           metrics[hostname] = aggregated_metric()
 
-      for metric_instance in ('system', 'user', 'nice', 'wait', 'idle', 'interrupt', 'softirq', 'steal') :
-        identifier = os.path.join( hostname , 'cpu-0' , 'cpu-%s' % metric_instance )
-        sock.send("GETVAL %s\n" % identifier)
+      sock.send("GETVAL %s/cpu-0/cpu-idle\n" % hostname)
+      data = recv(sock)
 
-        data = recv(sock)
-        metrics[hostname][date] = metric_instance , float(data.split('=')[1])
+      metrics[hostname][date] = float(data.split('=')[1])
 
       if not metrics[hostname].full() :
           full = False
 
     if full :
-      elb_data = array.array( 'f' ) , array.array( 'f' ) , array.array( 'f' )
-      for h in metrics :
-        metrics[h].push( elb_data )
+      elb_data = array.array( 'f' )
+      for metric in metrics.values() :
+          elb_data.extend( metric.values() )
 
-      for i in range(3) :
-        n = len(elb_data[i])
-        mean = sum(elb_data[i]) / n
-        data2 = [ v*v for v in elb_data[i] ]
-        sd  = math.sqrt( sum(data2) / n - mean*mean )
+      n = len(elb_data)
+      mean = sum(elb_data) / n
+      data2 = [ v*v for v in elb_data ]
+      sd  = math.sqrt( sum(data2) / n - mean*mean )
 
-        # As indexes start at 0, we use floor instead of ceil for percentile index
-        limit = int(math.floor( n * 0.2 ))
-        minval = sorted(elb_data[i])[limit]
+      # As indexes start at 0, we use floor instead of ceil for percentile index
+      limit = int(math.floor( n * 0.2 ))
+      minval = sorted(elb_data)[limit]
 
     time.sleep(60)
 

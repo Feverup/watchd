@@ -46,19 +46,11 @@ class aggregated_metric ( dict ) :
         keys.reverse()
         return dict.pop(self, keys.pop())
 
-    def __setitem__ ( self , key , ( metric_instance , value ) ) :
-        if not self.has_key(key) :
-            self.tstamp = key
-            dict.__setitem__( self , key , cpu() )
-        self[key][metric_instance] = value
+    def __setitem__ ( self , key , value ) :
+        self.tstamp = key
+        dict.__setitem__( self , key , value )
         if len(self) > self.length :
             self.unshift()
-
-    def push ( self , data ) :
-        for d in self.keys() :
-            items = self[d].summary()
-            for i in range(3) :
-                data[i].append( items[i] )
 
     def full ( self ) :
         return len(self) == self.length
