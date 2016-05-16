@@ -38,9 +38,7 @@ if __name__ == '__main__' :
     sock = socket.socket( socket.AF_UNIX )
     sock.connect( unixsock )
 
-    sock.send("LISTVAL\n")
-    listval = [ s.split() for s in recv(sock) ]
-    listval = dict( [ (b,a) for a,b in listval ] )
+    date = time.time()
 
     for hostname in [ str(i.private_dns_name.split('.')[0]) for i in instances ] :
 
@@ -49,7 +47,6 @@ if __name__ == '__main__' :
 
       for metric_instance in ('system', 'user', 'nice', 'wait', 'idle', 'interrupt', 'softirq', 'steal') :
         identifier = os.path.join( hostname , 'cpu-0' , 'cpu-%s' % metric_instance )
-        date = listval.get(identifier)
         sock.send("GETVAL %s\n" % identifier)
 
         data = recv(sock)

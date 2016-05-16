@@ -47,11 +47,10 @@ class aggregated_metric ( dict ) :
         return dict.pop(self, keys.pop())
 
     def __setitem__ ( self , key , ( metric_instance , value ) ) :
-        date = "%d" % float(key)
-        if not self.has_key(date) :
-            self.tstamp = date
-            dict.__setitem__( self , date , cpu() )
-        self[date][metric_instance] = value
+        if not self.has_key(key) :
+            self.tstamp = key
+            dict.__setitem__( self , key , cpu() )
+        self[key][metric_instance] = value
         if len(self) > self.length :
             self.unshift()
 
