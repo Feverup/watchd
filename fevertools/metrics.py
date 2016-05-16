@@ -35,8 +35,9 @@ class cpu ( dict ) :
 
 class aggregated_metric ( dict ) :
 
-    def __init__ ( self , length=10 ) :
+    def __init__ ( self , minsize=5 , length=10 ) :
         self.tstamp = None
+        self.minsize = minsize
         self.length = length
         dict.__init__( self )
 
@@ -53,7 +54,7 @@ class aggregated_metric ( dict ) :
             self.unshift()
 
     def full ( self ) :
-        return len(self) == self.length
+        return len(self) > self.minsize
 
     def last ( self ) :
         return self[self.tstamp]
