@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 from fevertools import recv, aggregated_metric
-import rrdtool
 
 import boto.ec2
 import boto.ec2.elb
@@ -14,7 +13,6 @@ import math
 import os
 
 unixsock = '/var/run/collectd-unixsock'
-topdir = '/var/lib/collectd/rrd/'
 
 if __name__ == '__main__' :
 
@@ -37,8 +35,6 @@ if __name__ == '__main__' :
     instances = boto.ec2.connect_to_region("eu-west-1") \
                         .get_only_instances(in_service)
 
-    elb_data = array.array( 'f' )
-
     sock = socket.socket( socket.AF_UNIX )
     sock.connect( unixsock )
 
@@ -48,38 +44,30 @@ if __name__ == '__main__' :
 
     for hostname in [ str(i.private_dns_name.split('.')[0]) for i in instances ] :
 
+      if not metrics.has_key(hostname) :
+          metrics[hostname] = aggregated_metric()
+
       for metric_instance in ('system', 'user', 'nice', 'wait', 'idle', 'interrupt', 'softirq', 'steal') :
         identifier = os.path.join( hostname , 'cpu-0' , 'cpu-%s' % metric_instance )
         date = listval.get(identifier)
         sock.send("GETVAL %s\n" % identifier)
-        data0 = recv(sock)
 
-        rrdfile = os.path.join( topdir , "%s.rrd" % identifier )
+        data = recv(sock)
+        metrics[hostname][date] = metric_instance , float(data.split('=')[1])
 
-        try :
-            info = rrdtool.info( rrdfile )
-        except Exception , ex :
-            print "ERROR %s" % ex
-            print "     ", dir(ex)
-            info = rrdtool.info( rrdfile )
-        last = info['last_update'] - info['last_update'] % 60
-        data = rrdtool.fetch( rrdfile, 'AVERAGE', '--resolution' , '60' ,
-                              '--start' , '-10m' , '--end' , str(last) )
+    elb_data = array.array( 'f' ) , array.array( 'f' ) , array.array( 'f' )
+    for h in metrics :
+        metrics[h].push( elb_data )
 
-        elb_data.extend( [ d[0] for d in data[2] if d[0] is not None ] )
+    for i in range(3) :
+        n = len(elb_data[i])
+        mean = sum(elb_data[i]) / n
+        data2 = [ v*v for v in elb_data[i] ]
+        sd  = math.sqrt( sum(data2) / n - mean*mean )
 
-        if not metrics.has_key(hostname) :
-            metrics[hostname] = aggregated_metric()
-        metrics[hostname][date] = metric_instance , float(data0.split('=')[1])
-
-    n = len(elb_data)
-    mean = sum(elb_data) / n
-    data2 = [ v*v for v in elb_data ]
-    sd  = math.sqrt( sum(data2) / n - mean*mean )
-
-    # As indexes start at 0, we use floor instead of ceil for percentile index
-    limit = int(math.floor( n * 0.2 ))
-    minval = sorted(elb_data)[limit]
+        # As indexes start at 0, we use floor instead of ceil for percentile index
+        limit = int(math.floor( n * 0.2 ))
+        minval = sorted(elb_data[i])[limit]
 
     time.sleep(60)
 

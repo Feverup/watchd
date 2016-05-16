@@ -16,12 +16,19 @@ def recv( sock , buffsize=1024 ) :
 
 class cpu ( dict ) :
 
+    busy = ('system', 'user', 'nice', 'wait', 'interrupt', 'softirq')
     types = ('system', 'user', 'nice', 'wait', 'idle', 'interrupt', 'softirq', 'steal')
 
     def __init__ ( self ) :
         dict.__init__( self )
         for attr in self.types :
             self[attr] = None
+
+    def summary ( self ) :
+        return sum([self[v] for v in self.busy]) , self['idle'] , self['steal']
+
+    def dump ( self ) :
+        return "%5.2f %5.2f %5.2f" % self.summary()
 
     def __str__ ( self ) :
         return " ".join( [ "%5.2f" % self[k] for k in self.types ] )
@@ -47,6 +54,12 @@ class aggregated_metric ( dict ) :
         self[date][metric_instance] = value
         if len(self) > self.length :
             self.unshift()
+
+    def push ( self , data ) :
+        for d in self.keys() :
+            items = self[d].summary()
+            for i in range(3) :
+                data[i].append( items[i] )
 
     def last ( self ) :
         return self[self.tstamp]
