@@ -23,7 +23,7 @@ if __name__ == '__main__' :
   if os.fork() :
       os.sys.exit(0)
 
-  metrics = {}
+  metrics = aggregated_metric()
 
   while True :
 
@@ -43,21 +43,18 @@ if __name__ == '__main__' :
 
     for hostname in [ str(i.private_dns_name.split('.')[0]) for i in instances ] :
 
-      if not metrics.has_key(hostname) :
-          metrics[hostname] = aggregated_metric()
-
       sock.send("GETVAL %s/cpu-0/cpu-idle\n" % hostname)
       data = recv(sock)
 
-      metrics[hostname][date] = float(data.split('=')[1])
+      metrics[date] = float(data.split('=')[1])
 
-      if not metrics[hostname].full() :
+      if not metrics.full() :
           full = False
 
     if full :
       elb_data = array.array( 'f' )
-      for metric in metrics.values() :
-          elb_data.extend( metric.values() )
+      for values in metrics.values() :
+          elb_data.extend( values )
 
       n = len(elb_data)
       mean = sum(elb_data) / n

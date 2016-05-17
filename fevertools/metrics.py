@@ -48,8 +48,10 @@ class aggregated_metric ( dict ) :
         return dict.pop(self, keys.pop())
 
     def __setitem__ ( self , key , value ) :
+        if not self.has_key(key) :
+            dict.__setitem__( self , key , [] )
         self.tstamp = key
-        dict.__setitem__( self , key , value )
+        self.last().append( value )
         if len(self) > self.length :
             self.unshift()
 
