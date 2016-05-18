@@ -1,18 +1,21 @@
 
 def recv( sock , buffsize=1024 ) :
     data = sock.recv(buffsize)
-    size = int(data.split('\n')[0].split()[0]) + 1
-    if size == 0 :
-        print "ERROR : %s" % " ".join(data.split()[1:])
+    header , data = data.split('\n', 1)
+    response_size , status_line = header.split(None, 1)
+    if not data :
+        if response_size == '-1' :
+            print "ERROR : %s" % status_line
         return
-    if size+1 == len(data.split('\n')) :
-        return data.split('\n')[1]
-    while size > 0 :
-        buff = sock.recv(buffsize)
-        data += buff
-        items = buff.split('\n')
-        size -= len(buff.split('\n'))
-    return data.split('\n')[1:-1]
+    size = int(response_size) + 1
+    while len(data.split('\n')) < size :
+        while data[-1] != "\n" :
+            data += sock.recv(buffsize)
+        if len(data.split('\n')) < size :
+            data += sock.recv(buffsize)
+    if size == 2 :
+        return data[:-1]
+    return data[:-1].split('\n')
 
 class cpu ( dict ) :
 
