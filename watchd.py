@@ -16,8 +16,8 @@ unixsock = '/var/run/collectd-unixsock'
 
 if __name__ == '__main__' :
 
-  if len(os.sys.argv) != 2 :
-      print "Usage: %s elbname" % os.sys.argv[0].split('.')[-1]
+  if len(os.sys.argv) != 3 :
+      print "Usage: %s metric[,metric,...] elbname" % os.sys.argv[0].split('.')[-1]
       os.sys.exit(2)
 
   if os.fork() :
@@ -27,7 +27,8 @@ if __name__ == '__main__' :
 
   while True :
 
-    elbname = os.sys.argv[1]
+    metric_list = os.sys.argv[1].split(",")
+    elbname = os.sys.argv[2]
     elb = boto.ec2.elb.connect_to_region("eu-west-1") \
                       .get_all_load_balancers([elbname])[0]
 
@@ -43,7 +44,8 @@ if __name__ == '__main__' :
 
     for hostname in [ str(i.private_dns_name.split('.')[0]) for i in instances ] :
 
-      sock.send("GETVAL %s/cpu-0/cpu-idle\n" % hostname)
+     for metric in metric_list :
+      sock.send("GETVAL %s/%s\n" % (hostname,metric))
       data = recv(sock)
 
       metrics[date] = float(data.split('=')[1])
