@@ -3,11 +3,12 @@ def recv( sock , buffsize=1024 ) :
     data = sock.recv(buffsize)
     header , data = data.split('\n', 1)
     response_size , status_line = header.split(None, 1)
-    if not data :
+    size = int(response_size)
+    if size < 1 :
         if response_size == '-1' :
             print "ERROR : %s" % status_line
         return
-    size = int(response_size) + 1
+    size = size + 1
     while len(data.split('\n')) < size :
         while data[-1] != "\n" :
             data += sock.recv(buffsize)
