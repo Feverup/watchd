@@ -23,6 +23,12 @@ def recv( sock , buffsize=1024 ) :
         return items[0]
     return items
 
+class weighted ( float ) :
+
+    def __init__ ( self , value , weight=1.0 ) :
+        float.__init__( self , value )
+        self.weight = weight
+
 class cpu ( dict ) :
 
     busy = ('system', 'user', 'nice', 'wait', 'interrupt', 'softirq')
