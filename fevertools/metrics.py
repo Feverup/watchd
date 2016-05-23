@@ -25,9 +25,16 @@ def recv( sock , buffsize=1024 ) :
 
 class weighted ( float ) :
 
+    def __new__ ( cls , value , weight=1.0 ) :
+        return super( weighted , cls ).__new__( cls , value )
+
     def __init__ ( self , value , weight=1.0 ) :
-        float.__init__( self , value )
         self.weight = weight
+
+    def __add__ ( self , other ) :
+        if self.weight != other.weight :
+            raise Exception( "Cannot sum weighted numbers with different weights" )
+        return weighted( super( weighted , self ).__add__( other ) , self.weight )
 
 class cpu ( dict ) :
 
