@@ -36,6 +36,14 @@ class weighted ( float ) :
             raise Exception( "Cannot sum weighted numbers with different weights" )
         return weighted( super( weighted , self ).__add__( other ) , self.weight )
 
+    def __radd__ ( self , other ) :
+        if other == 0 :
+            return self
+        return self.__add__( other )
+
+    def __iadd__ ( self , other ) :
+        return self.__add__( other )
+
 class cpu ( dict ) :
 
     busy = ('system', 'user', 'nice', 'wait', 'interrupt', 'softirq')
