@@ -1,4 +1,6 @@
 
+import time
+
 def recv( sock , buffsize=1024 ) :
     data = sock.recv(buffsize)
     while data.find(' ') < 0 :
@@ -60,15 +62,18 @@ class aggregated_metric ( dict ) :
         if not self.has_key(key) :
             dict.__setitem__( self , key , [] )
         self.tstamp = key
-        self.last().append( value )
+        self[self.tstamp].append( value )
         if len(self) > self.length :
             self.unshift()
 
     def full ( self ) :
         return len(self) > self.minsize
 
-    def last ( self ) :
-        return self[self.tstamp]
+    def last ( self , interval=0 ) :
+        if not interval :
+            return self[self.tstamp]
+        tstamp = time.time() - interval
+        return [ i for k in self.keys() for i in self[k] if k > tstamp ]
 
     def __str__ ( self ) :
         return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
