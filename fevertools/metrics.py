@@ -74,6 +74,8 @@ class aggregated_metric ( dict ) :
     def last ( self , interval=0 ) :
         if not interval :
             return array.array( 'f' , self[self.tstamp] )
+        elif interval < 0 :
+            return [ i for k in self.keys() for i in self[k] ]
         tstamp = time.time() - interval
         return array.array( 'f' , [ i for k in self.keys() for i in self[k] if k > tstamp ] )
 
