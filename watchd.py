@@ -59,9 +59,7 @@ if __name__ == '__main__' :
           elb_data.extend( values )
 
       n = len(elb_data)
-      mean = sum(elb_data) / n
-      data2 = [ v*v for v in elb_data ]
-      sd  = math.sqrt( sum(data2) / n - mean*mean )
+      mean , sd = metrics.mean()
 
       # As indexes start at 0, we use floor instead of ceil for percentile index
       limit = int(math.floor( n * 0.2 ))

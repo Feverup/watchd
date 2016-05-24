@@ -1,4 +1,6 @@
 
+import array
+import math
 import time
 
 def recv( sock , buffsize=1024 ) :
@@ -71,9 +73,17 @@ class aggregated_metric ( dict ) :
 
     def last ( self , interval=0 ) :
         if not interval :
-            return self[self.tstamp]
+            return array.array( 'f' , self[self.tstamp] )
         tstamp = time.time() - interval
-        return [ i for k in self.keys() for i in self[k] if k > tstamp ]
+        return array.array( 'f' , [ i for k in self.keys() for i in self[k] if k > tstamp ] )
+
+    def mean ( self , interval=0 ) :
+        data = self.last(interval)
+        n = len(data)
+        mean = sum(data) / n
+        data2 = [ v*v for v in data ]
+        sd  = math.sqrt( sum(data2) / n - mean*mean )
+        return mean , sd
 
     def __str__ ( self ) :
         return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
