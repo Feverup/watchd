@@ -87,6 +87,13 @@ class aggregated_metric ( dict ) :
         sd  = math.sqrt( sum(data2) / n - mean*mean )
         return mean , sd
 
+    def quantile ( self , prob , interval=0 ) :
+        data = self.last(interval)
+        n = len(data)
+        # As indexes start at 0, we use floor instead of ceil for percentile index
+        limit = int(math.floor( n * prob ))
+        return sorted(data)[limit]
+
     def __str__ ( self ) :
         return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
 
