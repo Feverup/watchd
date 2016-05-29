@@ -49,8 +49,8 @@ if __name__ == '__main__' :
       if data :
           metrics[date] = float(data.split('=')[1])
 
-      if not metrics.full() :
-          full = False
+    if not metrics.full() :
+        full = False
 
     if full :
 
