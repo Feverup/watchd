@@ -46,7 +46,8 @@ if __name__ == '__main__' :
       sock.send("GETVAL %s/%s\n" % (hostname,metric))
       data = recv(sock)
 
-      metrics[date] = float(data.split('=')[1])
+      if data :
+          metrics[date] = float(data.split('=')[1])
 
       if not metrics.full() :
           full = False

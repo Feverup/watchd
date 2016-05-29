@@ -22,7 +22,7 @@ def recv( sock , buffsize=1024 ) :
     if size == 2 :
         if response_size == '-1' :
             print "ERROR : %s" % status_line
-        return status_line
+        return
     elif size == 3 :
         return items[0]
     return items
