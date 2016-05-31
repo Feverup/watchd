@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
 from fevertools import recv, aggregated_metric
+from fevertools import elb_group
 
 import boto.ec2
 import boto.ec2.elb
+import boto.ec2.autoscale
 
 import ConfigParser
 
@@ -33,6 +35,8 @@ if __name__ == '__main__' :
 
   metric_list = config.get( os.sys.argv[1] , 'metric_list' ).split()
   elbname = config.get( os.sys.argv[1] , 'elbname' )
+  threshold = config.get( os.sys.argv[1] , 'threshold' )
+  policy = config.get( os.sys.argv[1] , 'policy' )
 
   while True :
 
@@ -65,6 +69,13 @@ if __name__ == '__main__' :
 
       mean , sd = metrics.mean(-1)
       minval = metrics.quantile(0.2, -1)
+
+      if mean-2*sd < threshold or minval < threshold :
+        autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
+        try :
+            autoscale.execute_policy( policy , as_group=elb_group(elbname) , honor_cooldown=1 )
+        except boto.exception.BotoServerError , ex :
+            print "WARNING : autoscaling error '%s': %s" % ( ex.error_code , ex.message )
 
     time.sleep(60)
 
