@@ -35,7 +35,7 @@ if __name__ == '__main__' :
 
   metric_list = config.get( os.sys.argv[1] , 'metric_list' ).split()
   elbname = config.get( os.sys.argv[1] , 'elbname' )
-  threshold = config.get( os.sys.argv[1] , 'threshold' )
+  threshold = config.getfloat( os.sys.argv[1] , 'threshold' )
   policy = config.get( os.sys.argv[1] , 'policy' )
 
   while True :
