@@ -107,13 +107,7 @@ class aggregated_metric ( dict ) :
         t_0 = time.time() + delta
         x, y = [], []
 
-        last_metric, values = datetime(1970, 1, 1), []
         for tstamp in self.keys() :
-            if (tstamp - last_metric).seconds == 0:
-                values.append(self[tstamp])
-            elif tstamp > last_metric:
-                last_metric = tstamp
-                values = [self[tstamp]]
             for v in self[tstamp] :
                 x.append(tstamp - t_0)
                 y.append(self[tstamp])
@@ -138,10 +132,8 @@ class aggregated_metric ( dict ) :
         # e_b = math.sqrt(SSR / (N - 2)) * math.sqrt(N / det)
         # e_a = math.sqrt(SSR / (N - 2)) * math.sqrt(x2 / det)
 
-        # For "current" value we return the max of full average and average for more recent timestamp
-        # This is mostly done because not all timestamps have values for all nodes
-        last_value = max(X, sum(values) / len(values))
-        return last_metric, last_value, a
+        # As we use prediction time as origin, axis crossing is the predicted value
+        return a
 
     def __str__ ( self ) :
         return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
