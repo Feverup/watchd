@@ -104,7 +104,7 @@ class aggregated_metric ( dict ) :
         # Y = a + bX
 
         # t_0 is set so that prediction is at t=0
-        t_0 = float(datetime.now().strftime("%s")) + delta
+        t_0 = time.time() + delta
         x, y = [], []
 
         last_metric, values = datetime(1970, 1, 1), []
@@ -114,8 +114,9 @@ class aggregated_metric ( dict ) :
             elif tstamp > last_metric:
                 last_metric = tstamp
                 values = [self[tstamp]]
-            x.append(tstamp - t_0)
-            y.append(self[tstamp])
+            for v in self[tstamp] :
+                x.append(tstamp - t_0)
+                y.append(self[tstamp])
 
         N, X, Y = len(x), sum(x), sum(y)
 
