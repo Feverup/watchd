@@ -1,7 +1,9 @@
 
 import array
 import math
+import datetime
 import time
+import sys
 
 def recv( sock , buffsize=1024 ) :
     data = sock.recv(buffsize)
@@ -21,7 +23,7 @@ def recv( sock , buffsize=1024 ) :
     response_size , status_line = items.pop(0).split(None, 1)
     if size == 2 :
         if response_size == '-1' :
-            print "ERROR : %s" % status_line
+            sys.stderr.write( "ERROR : %s %s\n" % ( datetime.datetime.now() , status_line ) )
         return
     elif size == 3 :
         return items[0]
