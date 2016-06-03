@@ -95,6 +95,11 @@ class aggregated_metric ( dict ) :
         return sorted(data)[limit]
 
     def predict ( self , delta ) :
+
+        if not len(self) > 1 :
+            sys.stderr.write( "ERROR : no prediction can be done with a single data point" )
+            return
+
         # Formulae taken from http://terpconnect.umd.edu/~toh/spectrum/CurveFitting.html#MathDetails
         # Y = a + bX
 
@@ -103,18 +108,16 @@ class aggregated_metric ( dict ) :
         x, y = [], []
 
         last_metric, values = datetime(1970, 1, 1), []
-        for xy in xypairs:
-            if (xy['Timestamp'] - last_metric).seconds == 0:
-                values.append(xy['Average'])
-            elif xy['Timestamp'] > last_metric:
-                last_metric = xy['Timestamp']
-                values = [xy['Average']]
-            x.append(float(xy['Timestamp'].strftime("%s")) - t_0)
-            y.append(xy['Average'])
+        for tstamp in self.keys() :
+            if (tstamp - last_metric).seconds == 0:
+                values.append(self[tstamp])
+            elif tstamp > last_metric:
+                last_metric = tstamp
+                values = [self[tstamp]]
+            x.append(tstamp - t_0)
+            y.append(self[tstamp])
 
         N, X, Y = len(x), sum(x), sum(y)
-        if max(x) - min(x) < 60:
-            return xypairs[0]['Timestamp'], Y / N, -1
 
         def pow2(x):
             return x * x
