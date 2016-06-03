@@ -86,9 +86,15 @@ class aggregated_metric ( dict ) :
         return array.array( 'f' , [ i for k in self.keys() for i in self[k] if k > tstamp ] )
 
     def check_threshold ( self , threshold , interval=-1 ) :
-      mean , sd = self.mean(interval)
-      values = [ mean-2*sd , self.quantile(0.1, interval) ]
+      values = [ self.two_sigma(interval) , self.one_tenth(interval) ]
       return [ v for v in values if cmp(v, abs(threshold)) == sign(threshold) ]
+
+    def two_sigma ( self , interval ) :
+      mean , sd = self.mean(interval)
+      return mean - 2 * sd
+
+    def one_tenth ( self , interval ) :
+      return self.quantile(0.1, interval)
 
     def mean ( self , interval=0 ) :
         data = self.last(interval)
