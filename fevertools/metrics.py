@@ -94,3 +94,28 @@ class aggregated_metric ( dict ) :
     def __str__ ( self ) :
         return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
 
+import boto.ec2
+import boto.ec2.elb
+
+class aggregated_elb ( aggregated_metric ) :
+
+    def __init__ ( self , elbname , minsize=5 , length=10 ) :
+        self.count = None
+        self.unhealthy = None
+        self.elbname = elbname
+        aggregated_metric.__init__ ( self , minsize , length )
+
+    def hostnames ( self ) :
+        instances = boto.ec2.elb.connect_to_region("eu-west-1") \
+                                .get_all_load_balancers([self.elbname])[0] \
+                                .get_instance_health()
+        in_service = [ i.instance_id for i in instances if i.state == 'InService' ]
+        self.count = len(instances)
+        self.unhealthy = len(instances) - len(in_service)
+        instances = boto.ec2.connect_to_region("eu-west-1") \
+                       .get_only_instances(in_service)
+        return [ str(i.private_dns_name.split('.')[0]) for i in instances ]
+
+    def __str__ ( self ) :
+        return "elb: %s/%s , size: %d\n%s" % ( self.unhealthy , self.count , len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
+

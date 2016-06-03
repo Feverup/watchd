@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from fevertools import recv, aggregated_metric
+from fevertools import recv, aggregated_elb
 
 import boto.ec2
 import boto.ec2.elb
@@ -23,18 +23,10 @@ if __name__ == '__main__' :
   if os.fork() :
       os.sys.exit(0)
 
-  metrics = aggregated_metric()
+  metrics = aggregated_elb(os.sys.argv[2])
+  metric_list = os.sys.argv[1].split(",")
 
   while True :
-
-    metric_list = os.sys.argv[1].split(",")
-    elbname = os.sys.argv[2]
-    elb = boto.ec2.elb.connect_to_region("eu-west-1") \
-                      .get_all_load_balancers([elbname])[0]
-
-    in_service = [ i.instance_id for i in elb.get_instance_health() if i.state == 'InService' ]
-    instances = boto.ec2.connect_to_region("eu-west-1") \
-                        .get_only_instances(in_service)
 
     sock = socket.socket( socket.AF_UNIX )
     sock.connect( unixsock )
@@ -42,7 +34,7 @@ if __name__ == '__main__' :
     date = time.time()
     full = True
 
-    for hostname in [ str(i.private_dns_name.split('.')[0]) for i in instances ] :
+    for hostname in metrics.hostnames() :
 
      for metric in metric_list :
       sock.send("GETVAL %s/%s\n" % (hostname,metric))
