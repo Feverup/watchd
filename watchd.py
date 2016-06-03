@@ -67,10 +67,7 @@ if __name__ == '__main__' :
 
     if full :
 
-      mean , sd = metrics.mean(-1)
-      minval = metrics.quantile(0.1, -1)
-
-      if mean-2*sd < threshold or minval < threshold :
+      if metrics.check_threshold( threshold ) :
         autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
         try :
             autoscale.execute_policy( policy , as_group=elb_group(elbname) , honor_cooldown=1 )

@@ -81,6 +81,11 @@ class aggregated_metric ( dict ) :
         tstamp = time.time() - interval
         return array.array( 'f' , [ i for k in self.keys() for i in self[k] if k > tstamp ] )
 
+    def check_threshold ( self , threshold , interval=-1 ) :
+      mean , sd = self.mean(interval)
+      values = [ mean-2*sd , self.quantile(0.1, interval) ]
+      return [ v for v in values if v < threshold ]
+
     def mean ( self , interval=0 ) :
         data = self.last(interval)
         n = len(data)
