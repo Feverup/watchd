@@ -48,6 +48,10 @@ class cpu ( dict ) :
     def __str__ ( self ) :
         return " ".join( [ "%5.2f" % self[k] for k in self.types ] )
 
+def sign ( value ) :
+    floatsign = math.copysign(1, value)
+    return int(floatsign)
+
 class aggregated_metric ( dict ) :
 
     def __init__ ( self , minsize=5 , length=10 ) :
@@ -84,7 +88,7 @@ class aggregated_metric ( dict ) :
     def check_threshold ( self , threshold , interval=-1 ) :
       mean , sd = self.mean(interval)
       values = [ mean-2*sd , self.quantile(0.1, interval) ]
-      return [ v for v in values if v < threshold ]
+      return [ v for v in values if cmp(v, abs(threshold)) == sign(threshold) ]
 
     def mean ( self , interval=0 ) :
         data = self.last(interval)
