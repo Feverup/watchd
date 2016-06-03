@@ -54,6 +54,8 @@ def sign ( value ) :
 
 class aggregated_metric ( dict ) :
 
+    statistics = ( 'two_sigma' , 'one_tenth' )
+
     def __init__ ( self , minsize=5 , length=10 ) :
         self.tstamp = None
         self.minsize = minsize
@@ -86,7 +88,8 @@ class aggregated_metric ( dict ) :
         return array.array( 'f' , [ i for k in self.keys() for i in self[k] if k > tstamp ] )
 
     def check_threshold ( self , threshold , interval=-1 ) :
-      values = [ self.two_sigma(interval) , self.one_tenth(interval) ]
+      methods = [ getattr(self, s) for s in self.statistics ]
+      values = [ method(interval) for method in methods ]
       return [ v for v in values if cmp(v, abs(threshold)) == sign(threshold) ]
 
     def two_sigma ( self , interval ) :
