@@ -44,6 +44,9 @@ class weighted ( float ) :
     def __iadd__ ( self , other ) :
         return self.__add__( other )
 
+    def __str__ ( self ) :
+        return "%sw%s" % ( float(self) , self.weight )
+
 class cpu ( dict ) :
 
     busy = ('system', 'user', 'nice', 'wait', 'interrupt', 'softirq')
@@ -92,7 +95,10 @@ class aggregated_metric ( dict ) :
         return self[self.tstamp]
 
     def __str__ ( self ) :
-        return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
+        vals_str = {}
+        for k in self.keys() :
+            vals_str[k] = map(str, self[k])
+        return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , vals_str[k] ) for k in self.keys() ] ) )
 
 import boto.ec2
 import boto.ec2.elb
@@ -101,7 +107,7 @@ class aggregated_elb ( aggregated_metric ) :
 
     def __init__ ( self , elbname , minsize=5 , length=10 ) :
         self.count = None
-        self.unhealthy = None
+        self.healthy = None
         self.elbname = elbname
         aggregated_metric.__init__ ( self , minsize , length )
 
@@ -111,11 +117,11 @@ class aggregated_elb ( aggregated_metric ) :
                                 .get_instance_health()
         in_service = [ i.instance_id for i in instances if i.state == 'InService' ]
         self.count = len(instances)
-        self.unhealthy = len(instances) - len(in_service)
+        self.healthy = len(in_service)
         instances = boto.ec2.connect_to_region("eu-west-1") \
                        .get_only_instances(in_service)
         return [ str(i.private_dns_name.split('.')[0]) for i in instances ]
 
     def __str__ ( self ) :
-        return "elb: %s/%s , size: %d\n%s" % ( self.unhealthy , self.count , len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
+        return "elb: %s/%s , %s" % ( self.healthy , self.count , aggregated_metric.__str__(self) )
 
