@@ -1,11 +1,10 @@
 #!/usr/bin/python
 
-from fevertools import recv, aggregated_metric
+from fevertools import recv, aggregated_metric, autoscale_action
 from fevertools import elb_group
 
 import boto.ec2
 import boto.ec2.elb
-import boto.ec2.autoscale
 
 import ConfigParser
 
@@ -68,11 +67,7 @@ if __name__ == '__main__' :
     if full :
 
       if metrics.check_threshold( threshold ) :
-        autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
-        try :
-            autoscale.execute_policy( policy , as_group=elb_group(elbname) , honor_cooldown=1 )
-        except boto.exception.BotoServerError , ex :
-            print "WARNING : autoscaling error '%s': %s" % ( ex.error_code , ex.message )
+        autoscale_action.run( policy , elb_group(elbname) )
 
     time.sleep(60)
 
