@@ -119,10 +119,16 @@ class aggregated_metric ( dict ) :
     def __str__ ( self ) :
         return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
 
-def autoscale_action ( policy , groupname ) :
-    autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
-    try :
-        autoscale.execute_policy( policy , as_group=groupname , honor_cooldown=1 )
-    except boto.exception.BotoServerError , ex :
-        os.sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
+class autoscale_action :
+
+    def __init__ ( self , policy , groupname ) :
+        self.policy = policy
+        self.groupname = groupname
+
+    def run ( self ) :
+        autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
+        try :
+            autoscale.execute_policy( self.policy , as_group=self.groupname , honor_cooldown=1 )
+        except boto.exception.BotoServerError , ex :
+            os.sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
 

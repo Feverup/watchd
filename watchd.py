@@ -37,6 +37,8 @@ if __name__ == '__main__' :
   threshold = config.getfloat( os.sys.argv[1] , 'threshold' )
   policy = config.get( os.sys.argv[1] , 'policy' )
 
+  action = autoscale_action( policy , elb_group(elbname) )
+
   while True :
 
     elb = boto.ec2.elb.connect_to_region("eu-west-1") \
@@ -67,7 +69,7 @@ if __name__ == '__main__' :
     if full :
 
       if metrics.check_threshold( threshold ) :
-        autoscale_action.run( policy , elb_group(elbname) )
+        action.run()
 
     time.sleep(60)
 
