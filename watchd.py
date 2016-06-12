@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from fevertools import recv, aggregated_metric, autoscale_action
+from fevertools import recv, aggregated_metric, get_action
 from fevertools import elb_group
 
 import boto.ec2
@@ -35,9 +35,9 @@ if __name__ == '__main__' :
   metric_list = config.get( os.sys.argv[1] , 'metric_list' ).split()
   elbname = config.get( os.sys.argv[1] , 'elbname' )
   threshold = config.getfloat( os.sys.argv[1] , 'threshold' )
-  policy = config.get( os.sys.argv[1] , 'policy' )
 
-  action = autoscale_action( policy , elb_group(elbname) )
+  action = config.get( os.sys.argv[1] , 'action' )
+  action = get_action( action )
 
   while True :
 
@@ -69,7 +69,7 @@ if __name__ == '__main__' :
     if full :
 
       if metrics.check_threshold( threshold ) :
-        action.run()
+        action.run( elb_group(elbname) )
 
     time.sleep(60)
 
