@@ -54,12 +54,11 @@ def sign ( value ) :
 
 class aggregated_metric ( dict ) :
 
-    statistics = ( 'two_sigma' , 'one_tenth' )
-
-    def __init__ ( self , minsize=5 , length=10 ) :
+    def __init__ ( self , statistics , minsize=5 , length=10 ) :
         self.tstamp = None
         self.minsize = minsize
         self.length = length
+        self.statistics = statistics
         dict.__init__( self )
 
     def unshift ( self ) :

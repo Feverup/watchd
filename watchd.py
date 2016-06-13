@@ -25,8 +25,6 @@ if __name__ == '__main__' :
   if os.fork() :
       os.sys.exit(0)
 
-  metrics = aggregated_metric()
-
   config = ConfigParser.ConfigParser()
   config.read( [ 'watchd.ini' , '/etc/watchd.ini' ] )
   if not config.has_section( os.sys.argv[1] ) :
@@ -37,6 +35,9 @@ if __name__ == '__main__' :
   elbname = config.get( os.sys.argv[1] , 'elbname' )
   threshold = config.getfloat( os.sys.argv[1] , 'threshold' )
   policy = config.get( os.sys.argv[1] , 'policy' )
+  statistics = config.get( os.sys.argv[1] , 'statistics' )
+
+  metrics = aggregated_metric(statistics)
 
   while True :
 
