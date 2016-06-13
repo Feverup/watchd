@@ -110,7 +110,7 @@ class aggregated_metric ( dict ) :
         for tstamp in self.keys() :
             for v in self[tstamp] :
                 x.append(tstamp - t_0)
-                y.append(self[tstamp])
+                y.append(float(v))
 
         N, X, Y = len(x), sum(x), sum(y)
 
