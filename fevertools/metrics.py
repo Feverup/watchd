@@ -113,6 +113,48 @@ class aggregated_metric ( dict ) :
         limit = int(math.floor( n * prob ))
         return sorted(data)[limit]
 
+    def predict ( self , t_0 , delta=True ) :
+
+        if not len(self) > 1 :
+            sys.stderr.write( "ERROR : no prediction can be done with a single data point" )
+            return
+
+        # Formulae taken from http://terpconnect.umd.edu/~toh/spectrum/CurveFitting.html#MathDetails
+        # Y = a + bX
+
+        # t_0 is set so that prediction is at t=0
+        if delta :
+            t_0 = time.time() + delta
+        x, y = [], []
+
+        for tstamp in self.keys() :
+            for v in self[tstamp] :
+                x.append(tstamp - t_0)
+                y.append(float(v))
+
+        N, X, Y = len(x), sum(x), sum(y)
+
+        def pow2(x):
+            return x * x
+        x2 = sum(map(pow2, x))
+        # Y2 = sum(map(pow2, y))
+        xy = zip(x, y)
+        _XY = sum(map(lambda p: p[0] * p[1], xy))
+        det = N * x2 - X * X
+
+        b = (N * _XY - X * Y) / det
+        a = (Y - b * X) / N
+
+        # SSY = sum(map(lambda p: pow2(p[1] - Y / N), xy))
+        # SSR = sum(map(lambda p: pow2(p[1] - (a + b * p[0])), xy))
+
+        # R2 = 1 - SSR / SSY
+        # e_b = math.sqrt(SSR / (N - 2)) * math.sqrt(N / det)
+        # e_a = math.sqrt(SSR / (N - 2)) * math.sqrt(x2 / det)
+
+        # As we use prediction time as origin, axis crossing is the predicted value
+        return a
+
     def __str__ ( self ) :
         return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
 

@@ -33,51 +33,6 @@ class Command(BaseCommand):
         prediction = metrics[date1][1] + rate * PRED_TIME
         return metrics[date1][0], metrics[date1][1], prediction
 
-    def linear_fit(self, xypairs, delta):
-        # Formulae taken from http://terpconnect.umd.edu/~toh/spectrum/CurveFitting.html#MathDetails
-        # Y = a + bX
-
-        # t_0 is set so that prediction is at t=0
-        t_0 = float(datetime.now().strftime("%s")) + delta
-        x, y = [], []
-
-        last_metric, values = datetime(1970, 1, 1), []
-        for xy in xypairs:
-            if (xy['Timestamp'] - last_metric).seconds == 0:
-                values.append(xy['Average'])
-            elif xy['Timestamp'] > last_metric:
-                last_metric = xy['Timestamp']
-                values = [xy['Average']]
-            x.append(float(xy['Timestamp'].strftime("%s")) - t_0)
-            y.append(xy['Average'])
-
-        N, X, Y = len(x), sum(x), sum(y)
-        if max(x) - min(x) < 60:
-            return xypairs[0]['Timestamp'], Y / N, -1
-
-        def pow2(x):
-            return x * x
-        x2 = sum(map(pow2, x))
-        # Y2 = sum(map(pow2, y))
-        xy = zip(x, y)
-        _XY = sum(map(lambda p: p[0] * p[1], xy))
-        det = N * x2 - X * X
-
-        b = (N * _XY - X * Y) / det
-        a = (Y - b * X) / N
-
-        # SSY = sum(map(lambda p: pow2(p[1] - Y / N), xy))
-        # SSR = sum(map(lambda p: pow2(p[1] - (a + b * p[0])), xy))
-
-        # R2 = 1 - SSR / SSY
-        # e_b = math.sqrt(SSR / (N - 2)) * math.sqrt(N / det)
-        # e_a = math.sqrt(SSR / (N - 2)) * math.sqrt(x2 / det)
-
-        # For "current" value we return the max of full average and average for more recent timestamp
-        # This is mostly done because not all timestamps have values for all nodes
-        last_value = max(X, sum(values) / len(values))
-        return last_metric, last_value, a
-
     def check_reliability(self, elb_instances):
         def get_latency():
             latency = self.aws.get_metric_statistics(
