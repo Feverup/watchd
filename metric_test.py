@@ -22,5 +22,7 @@ class test_metric ( fevertools.aggregated_metric ) :
 
 if __name__ == "__main__" :
     metric = test_metric.from_datastream ( stream1 , stream2 , stream3 , stream4 )
+    t_predict = 1465835837 + 300
     print metric
+    print metric.predict( t_predict , False )
 

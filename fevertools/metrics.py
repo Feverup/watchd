@@ -94,7 +94,7 @@ class aggregated_metric ( dict ) :
         limit = int(math.floor( n * prob ))
         return sorted(data)[limit]
 
-    def predict ( self , delta ) :
+    def predict ( self , t_0 , delta=True ) :
 
         if not len(self) > 1 :
             sys.stderr.write( "ERROR : no prediction can be done with a single data point" )
@@ -104,7 +104,8 @@ class aggregated_metric ( dict ) :
         # Y = a + bX
 
         # t_0 is set so that prediction is at t=0
-        t_0 = time.time() + delta
+        if delta :
+            t_0 = time.time() + delta
         x, y = [], []
 
         for tstamp in self.keys() :
