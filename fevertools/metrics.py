@@ -1,4 +1,6 @@
 
+import boto.ec2.autoscale
+
 import array
 import math
 import datetime
@@ -54,11 +56,12 @@ def sign ( value ) :
 
 class aggregated_metric ( dict ) :
 
-    def __init__ ( self , statistics , minsize=5 , length=10 ) :
+    def __init__ ( self , statistics , action, minsize=5 , length=10 ) :
         self.tstamp = None
         self.minsize = minsize
         self.length = length
         self.statistics = statistics
+        self.action = get_action( action )
         dict.__init__( self )
 
     def unshift ( self ) :
@@ -115,4 +118,22 @@ class aggregated_metric ( dict ) :
 
     def __str__ ( self ) :
         return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
+
+def get_action ( action ) :
+    action , param = action.split(':',1)
+    if action == 'autoscale' :
+        return autoscale_action( param )
+    raise Exception( "ERROR: action '%s' unknown" % action )
+
+class autoscale_action :
+
+    def __init__ ( self , policy ) :
+        self.policy = policy
+
+    def run ( self , groupname ) :
+        autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
+        try :
+            autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
+        except boto.exception.BotoServerError , ex :
+            os.sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
 

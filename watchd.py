@@ -5,7 +5,6 @@ from fevertools import elb_group
 
 import boto.ec2
 import boto.ec2.elb
-import boto.ec2.autoscale
 
 import ConfigParser
 
@@ -33,10 +32,10 @@ if __name__ == '__main__' :
       metric_list = config.get( name , 'metric_list' ).split()
       elbname = config.get( name , 'elbname' )
       threshold = config.getfloat( name , 'threshold' )
-      policy = config.get( name , 'policy' )
+      action = config.get( name , 'action' )
       statistics = config.get( name , 'statistics' )
 
-      metrics.append( aggregated_metric(statistics) )
+      metrics.append( aggregated_metric(statistics, action) )
 
   while True :
 
@@ -68,11 +67,7 @@ if __name__ == '__main__' :
     if full :
 
       if metrics.check_threshold( threshold ) :
-        autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
-        try :
-            autoscale.execute_policy( policy , as_group=elb_group(elbname) , honor_cooldown=1 )
-        except boto.exception.BotoServerError , ex :
-            print "WARNING : autoscaling error '%s': %s" % ( ex.error_code , ex.message )
+        metrics.action.run( elb_group(elbname) )
 
     time.sleep(60)
 
