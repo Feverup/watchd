@@ -101,6 +101,10 @@ class aggregated_metric ( dict ) :
     def one_tenth ( self , interval ) :
       return self.quantile(0.1, interval)
 
+    # prediction will use all collected values
+    def five_mins ( self , interval ) :
+      return self.predict(5*60)
+
     def mean ( self , interval=0 ) :
         data = self.last(interval)
         n = len(data)

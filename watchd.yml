@@ -9,9 +9,10 @@ backend:
     - threshold: -20
       methods:
         - two_sigma
-    - threshold: -15
-      methods:
         - one_tenth
+    - threshold: -10
+      methods:
+        - five_mins
   policy: ScaleOneUp
 
 recommender:
