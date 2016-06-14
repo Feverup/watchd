@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from fevertools import recv, weighted, aggregated_elb
+from fevertools import recv, aggregated_elb
 
 import boto.ec2
 import boto.ec2.elb
@@ -40,7 +40,7 @@ if __name__ == '__main__' :
       sock.send("GETVAL %s/%s\n" % (hostname,metric))
       data = recv(sock)
 
-      metrics[date] = weighted(data.split('=')[1], metrics.healthy)
+      metrics[date] = data.split('=')[1]
 
       if not metrics.full() :
           full = False

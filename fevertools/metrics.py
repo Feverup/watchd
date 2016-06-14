@@ -80,11 +80,14 @@ class aggregated_metric ( dict ) :
         keys.reverse()
         return dict.pop(self, keys.pop())
 
-    def __setitem__ ( self , key , value ) :
+    def input_value ( self , datastr ) :
+        return float(datastr)
+
+    def __setitem__ ( self , key , valstr ) :
         if not self.has_key(key) :
             dict.__setitem__( self , key , [] )
         self.tstamp = key
-        self.last().append( value )
+        self.last().append( self.input_value(valstr) )
         if len(self) > self.length :
             self.unshift()
 
@@ -110,6 +113,9 @@ class aggregated_elb ( aggregated_metric ) :
         self.healthy = None
         self.elbname = elbname
         aggregated_metric.__init__ ( self , minsize , length )
+
+    def input_value ( self , datastr ) :
+        return weighted(datastr, self.healthy)
 
     def hostnames ( self ) :
         instances = boto.ec2.elb.connect_to_region("eu-west-1") \
