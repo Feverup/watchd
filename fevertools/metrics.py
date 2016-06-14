@@ -91,7 +91,7 @@ class aggregated_metric ( dict ) :
      for statistic in self.statistics :
       methods = [ getattr(self, s) for s in statistic['methods'] ]
       values = [ method(interval) for method in methods ]
-      output.extend( [ v for v in values if cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] )
+      output.extend( [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] )
      return output
 
     def two_sigma ( self , interval ) :
@@ -123,8 +123,7 @@ class aggregated_metric ( dict ) :
     def predict ( self , t_0 , delta=True ) :
 
         if not len(self) > 1 :
-            sys.stderr.write( "ERROR : no prediction can be done with a single data point" )
-            return
+            return float('NaN')
 
         # Formulae taken from http://terpconnect.umd.edu/~toh/spectrum/CurveFitting.html#MathDetails
         # Y = a + bX
