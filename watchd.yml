@@ -1,0 +1,23 @@
+---
+
+backend:
+  metric_list:
+    - cpu-0/cpu-idle
+    - cpu-1/cpu-idle
+  elbname: front-balancer
+  statistics:
+    - two_sigma
+    - one_tenth
+  threshold: -20
+  policy: ScaleOneUp
+
+recommender:
+  metric_list:
+    - cpu-0/cpu-idle
+  elbname: recommender
+  statistics:
+    - two_sigma
+    - one_tenth
+  threshold: -20
+  policy: ScaleOneUp
+
