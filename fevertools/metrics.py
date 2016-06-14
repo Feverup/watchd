@@ -86,10 +86,13 @@ class aggregated_metric ( dict ) :
         tstamp = time.time() - interval
         return array.array( 'f' , [ i for k in self.keys() for i in self[k] if k > tstamp ] )
 
-    def check_threshold ( self , threshold , interval=-1 ) :
-      methods = [ getattr(self, s) for s in self.statistics ]
+    def check_thresholds ( self , interval=-1 ) :
+     output = []
+     for statistic in self.statistics :
+      methods = [ getattr(self, s) for s in statistic['methods'] ]
       values = [ method(interval) for method in methods ]
-      return [ v for v in values if cmp(v, abs(threshold)) == sign(threshold) ]
+      output.extend( [ v for v in values if cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] )
+     return output
 
     def two_sigma ( self , interval ) :
       mean , sd = self.mean(interval)

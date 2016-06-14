@@ -36,7 +36,6 @@ if __name__ == '__main__' :
 
   metric_list = config[os.sys.argv[1]]['metric_list']
   elbname = config[os.sys.argv[1]]['elbname']
-  threshold = float(config[os.sys.argv[1]]['threshold'])
   policy = config[os.sys.argv[1]]['policy']
   statistics = config[os.sys.argv[1]]['statistics']
 
@@ -71,7 +70,7 @@ if __name__ == '__main__' :
 
     if full :
 
-      if metrics.check_threshold( threshold ) :
+      if metrics.check_thresholds() :
         autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
         try :
             autoscale.execute_policy( policy , as_group=elb_group(elbname) , honor_cooldown=1 )
