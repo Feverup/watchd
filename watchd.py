@@ -29,18 +29,13 @@ if __name__ == '__main__' :
 
   metrics = []
   for name in config.sections() :
-      metric_list = config.get( name , 'metric_list' ).split()
-      elbname = config.get( name , 'elbname' )
-      threshold = config.getfloat( name , 'threshold' )
-      action = config.get( name , 'action' )
-      statistics = config.get( name , 'statistics' )
-
-      metrics.append( aggregated_metric(statistics, action) )
+      metrics.append( aggregated_metric(config, name) )
 
   while True :
 
+   for metric in metrics :
     elb = boto.ec2.elb.connect_to_region("eu-west-1") \
-                      .get_all_load_balancers([elbname])[0]
+                      .get_all_load_balancers([metric.elbname])[0]
 
     in_service = [ i.instance_id for i in elb.get_instance_health() if i.state == 'InService' ]
     instances = boto.ec2.connect_to_region("eu-west-1") \
@@ -54,8 +49,8 @@ if __name__ == '__main__' :
 
     for hostname in [ str(i.private_dns_name.split('.')[0]) for i in instances ] :
 
-     for metric in metric_list :
-      sock.send("GETVAL %s/%s\n" % (hostname,metric))
+     for m in metric.metric_list :
+      sock.send("GETVAL %s/%s\n" % (hostname,m))
       data = recv(sock)
 
       if data :
@@ -66,8 +61,8 @@ if __name__ == '__main__' :
 
     if full :
 
-      if metrics.check_threshold( threshold ) :
-        metrics.action.run( elb_group(elbname) )
+      if metrics.check_threshold( metric.threshold ) :
+        metrics.action.run( elb_group(metric.elbname) )
 
     time.sleep(60)
 

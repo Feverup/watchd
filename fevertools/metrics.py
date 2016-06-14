@@ -56,12 +56,15 @@ def sign ( value ) :
 
 class aggregated_metric ( dict ) :
 
-    def __init__ ( self , statistics , action, minsize=5 , length=10 ) :
+    def __init__ ( self , config , name , minsize=5 , length=10 ) :
+        self.metric_list = config.get( name , 'metric_list' ).split()
+        self.elbname = config.get( name , 'elbname' )
+        self.threshold = config.getfloat( name , 'threshold' )
         self.tstamp = None
         self.minsize = minsize
         self.length = length
-        self.statistics = statistics
-        self.action = get_action( action )
+        self.statistics = config.get( name , 'statistics' )
+        self.action = get_action( config.get( name , 'action' ) )
         dict.__init__( self )
 
     def unshift ( self ) :
