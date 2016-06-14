@@ -29,6 +29,30 @@ def recv( sock , buffsize=1024 ) :
         return items[0]
     return items
 
+class weighted ( float ) :
+
+    def __new__ ( cls , value , weight=1.0 ) :
+        return super( weighted , cls ).__new__( cls , value )
+
+    def __init__ ( self , value , weight=1.0 ) :
+        self.weight = weight
+
+    def __add__ ( self , other ) :
+        if self.weight != other.weight :
+            raise Exception( "Cannot sum weighted numbers with different weights" )
+        return weighted( super( weighted , self ).__add__( other ) , self.weight )
+
+    def __radd__ ( self , other ) :
+        if other == 0 :
+            return self
+        return self.__add__( other )
+
+    def __iadd__ ( self , other ) :
+        return self.__add__( other )
+
+    def __str__ ( self ) :
+        return "%sw%s" % ( float(self) , self.weight )
+
 class cpu ( dict ) :
 
     busy = ('system', 'user', 'nice', 'wait', 'interrupt', 'softirq')
@@ -67,11 +91,14 @@ class aggregated_metric ( dict ) :
         keys.reverse()
         return dict.pop(self, keys.pop())
 
-    def __setitem__ ( self , key , value ) :
+    def input_value ( self , datastr ) :
+        return float(datastr)
+
+    def __setitem__ ( self , key , valstr ) :
         if not self.has_key(key) :
             dict.__setitem__( self , key , [] )
         self.tstamp = key
-        self[self.tstamp].append( value )
+        self[self.tstamp].append( self.input_value(valstr) )
         if len(self) > self.length :
             self.unshift()
 
@@ -162,5 +189,36 @@ class aggregated_metric ( dict ) :
         return a
 
     def __str__ ( self ) :
-        return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , self[k] ) for k in self.keys() ] ) )
+        vals_str = {}
+        for k in self.keys() :
+            vals_str[k] = map(str, self[k])
+        return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , vals_str[k] ) for k in self.keys() ] ) )
+
+import boto.ec2
+import boto.ec2.elb
+
+class aggregated_elb ( aggregated_metric ) :
+
+    def __init__ ( self , elbname , minsize=5 , length=10 ) :
+        self.count = None
+        self.healthy = None
+        self.elbname = elbname
+        aggregated_metric.__init__ ( self , minsize , length )
+
+    def input_value ( self , datastr ) :
+        return weighted(datastr, self.healthy)
+
+    def hostnames ( self ) :
+        instances = boto.ec2.elb.connect_to_region("eu-west-1") \
+                                .get_all_load_balancers([self.elbname])[0] \
+                                .get_instance_health()
+        in_service = [ i.instance_id for i in instances if i.state == 'InService' ]
+        self.count = len(instances)
+        self.healthy = len(in_service)
+        instances = boto.ec2.connect_to_region("eu-west-1") \
+                       .get_only_instances(in_service)
+        return [ str(i.private_dns_name.split('.')[0]) for i in instances ]
+
+    def __str__ ( self ) :
+        return "elb: %s/%s , %s" % ( self.healthy , self.count , aggregated_metric.__str__(self) )
 
