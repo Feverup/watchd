@@ -47,7 +47,6 @@ if __name__ == '__main__' :
     sock.connect( unixsock )
 
     date = time.time()
-    full = True
 
     for hostname in metrics.hostnames() :
 
@@ -58,10 +57,7 @@ if __name__ == '__main__' :
       if data :
           metrics[date] = float(data.split('=')[1])
 
-    if not metrics.full() :
-        full = False
-
-    if full :
+    if metrics.full() :
 
       if metrics.check_thresholds() :
         autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
