@@ -52,6 +52,12 @@ class weighted ( float ) :
     def __iadd__ ( self , other ) :
         return self.__add__( other )
 
+    def scaled ( self ) :
+        return float(self) * self.weight
+
+    def scaled2 ( self ) :
+        return float(self) * self.scaled()
+
     def __str__ ( self ) :
         return "%sw%s" % ( float(self) , self.weight )
 
@@ -211,6 +217,14 @@ class aggregated_elb ( aggregated_metric ) :
 
     def input_value ( self , datastr ) :
         return weighted(datastr, self.healthy)
+
+    def mean ( self , interval=0 ) :
+        data = self.last(interval)
+        n = sum( [ v.weight for v in data ] )
+        mean = sum( [ v.scaled() for v in data ] ) / n
+        data2 = [ v.scaled2() for v in data ]
+        sd  = math.sqrt( sum(data2) / n - mean*mean )
+        return mean , sd
 
     def hostnames ( self ) :
         instances = boto.ec2.elb.connect_to_region("eu-west-1") \
