@@ -63,7 +63,7 @@ class aggregated_metric ( dict ) :
         self.tstamp = None
         self.minsize = minsize
         self.length = length
-        self.statistics = config.get( name , 'statistics' )
+        self.statistics = [ s.strip() for s in config.get( name , 'statistics' ).split(',') ]
         self.action = get_action( config.get( name , 'action' ) )
         dict.__init__( self )
 
