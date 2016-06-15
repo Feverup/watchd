@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import fevertools
+import fevertools.metrics
 import sys
 
 stream1 = "1465835356 9.220013e+01 8.465013e+01 9.305006e+01 8.128337e+01 9.184971e+01 8.361654e+01 8.761658e+01 7.796592e+01 8.441707e+01 7.660061e+01"
@@ -8,7 +8,7 @@ stream2 = "1465835356 8.923330e+01 8.089996e+01 8.853328e+01 7.746370e+01 8.9915
 stream3 = "1465835416 8.719994e+01 8.958326e+01 8.764982e+01 8.616683e+01 8.005028e+01"
 stream4 = "1465835416 8.374998e+01 8.623329e+01 8.074983e+01 8.426661e+01 7.838331e+01"
 
-class test_metric ( fevertools.aggregated_metric ) :
+class test_metric ( fevertools.metrics.aggregated_metric ) :
 
     @classmethod
     def from_datastream ( cls , config , *streams ) :
@@ -21,10 +21,29 @@ class test_metric ( fevertools.aggregated_metric ) :
                 tstamp += 60
         return obj
 
+wstream1 = "1466008406 4 13.0 15.0 16.0 17.0"
+wstream2 = "1466008466 2 28.0 32.0"
+
+class test_weighted ( fevertools.metrics.aggregated_elb ) :
+
+    @classmethod
+    def from_datastream ( cls , config , *streams ) :
+        obj = cls(config)
+        for stream in streams :
+            tstamp , healthy , values = stream.split(None,2)
+            tstamp = int(tstamp)
+            obj.count = int(healthy)
+            obj.healthy = int(healthy)
+            for val in values.split() :
+                obj[tstamp] = val
+        return obj
+
+
 tol = 1e-4
 
 if __name__ == "__main__" :
-    config = { 'metric_list':'' , 'statistics':'' , 'action':'autoscale:' }
+    config = { 'metric_list':'' , 'statistics':'' , 'action':'autoscale:' , 'elbname':'' }
+
     metric = test_metric.from_datastream ( config , stream1 , stream2 , stream3 , stream4 )
     t_predict = 1465835837 + 300
     if len(sys.argv) > 1 :
@@ -41,4 +60,9 @@ if __name__ == "__main__" :
     predict = metric.predict( t_predict , False )
     if abs( predict - 76.77483 ) > tol :
         print "Wrong prediction : %s vs. 76.77483" % predict
+
+    metric = test_weighted.from_datastream ( config , wstream1 , wstream2 )
+    mean , sd = metric.mean(-1)
+    if abs( mean - 18.2 ) > tol or abs( sd - 6.11228 ) > tol :
+        print "Wrong weighted average : %s / %s vs. 18.2 / 6.11" % metric.mean(-1)
 
