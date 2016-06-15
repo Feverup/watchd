@@ -11,8 +11,8 @@ stream4 = "1465835416 8.374998e+01 8.623329e+01 8.074983e+01 8.426661e+01 7.8383
 class test_metric ( fevertools.aggregated_metric ) :
 
     @classmethod
-    def from_datastream ( cls , *streams ) :
-        obj = cls()
+    def from_datastream ( cls , config , *streams ) :
+        obj = cls(config)
         for stream in streams :
             tstamp , values = stream.split(None,1)
             tstamp = int(tstamp)
@@ -21,8 +21,11 @@ class test_metric ( fevertools.aggregated_metric ) :
                 tstamp += 60
         return obj
 
+tol = 1e-4
+
 if __name__ == "__main__" :
-    metric = test_metric.from_datastream ( stream1 , stream2 , stream3 , stream4 )
+    config = { 'metric_list':'' , 'statistics':'' , 'action':'autoscale:' }
+    metric = test_metric.from_datastream ( config , stream1 , stream2 , stream3 , stream4 )
     t_predict = 1465835837 + 300
     if len(sys.argv) > 1 :
         print 'y <- matrix(nrow=0, ncol=2)'
@@ -35,6 +38,7 @@ if __name__ == "__main__" :
         print 'plot(fit)'
         print 'predict(fit, newdata=data.frame(X1=c(%s)))' % (t_predict)
         print
-    print metric
-    print metric.predict( t_predict , False )
+    predict = metric.predict( t_predict , False )
+    if abs( predict - 76.77483 ) > tol :
+        print "Wrong prediction : %s vs. 76.77483" % predict
 
