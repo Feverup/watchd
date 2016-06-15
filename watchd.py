@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 from fevertools import recv, aggregated_elb
-from fevertools import elb_group
 
 import boto.ec2
 import boto.ec2.elb
@@ -41,11 +40,7 @@ if __name__ == '__main__' :
     sock.connect( unixsock )
 
     metric.update( sock )
-
-    if metric.full() :
-
-      if metric.check_thresholds() :
-        metric.action.run( elb_group(metric.elbname) )
+    metric.check_thresholds()
 
    time.sleep(60)
 

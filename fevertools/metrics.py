@@ -1,4 +1,6 @@
 
+from fevertools import elb_group
+
 import boto.ec2.autoscale
 
 import array
@@ -118,12 +120,12 @@ class aggregated_metric ( dict ) :
         return array.array( 'f' , [ i for k in self.keys() for i in self[k] if k > tstamp ] )
 
     def check_thresholds ( self , interval=-1 ) :
-     output = []
-     for statistic in self.statistics :
-      methods = [ getattr(self, s) for s in statistic['methods'] ]
-      values = [ method(interval) for method in methods ]
-      output.extend( [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] )
-     return output
+        if self.full() :
+            for statistic in self.statistics :
+                methods = [ getattr(self, s) for s in statistic['methods'] ]
+                values = [ method(interval) for method in methods ]
+                if [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] :
+                    return self.action.run( elb_group(self.elbname) )
 
     def two_sigma ( self , interval ) :
       mean , sd = self.mean(interval)
