@@ -54,15 +54,15 @@ if __name__ == '__main__' :
       data = recv(sock)
 
       if data :
-          metrics[date] = float(data.split('=')[1])
+          metric[date] = float(data.split('=')[1])
 
-    if not metrics.full() :
+    if not metric.full() :
         full = False
 
     if full :
 
-      if metrics.check_threshold( metric.threshold ) :
-        metrics.action.run( elb_group(metric.elbname) )
+      if metric.check_threshold( metric.threshold ) :
+        metric.action.run( elb_group(metric.elbname) )
 
     time.sleep(60)
 
