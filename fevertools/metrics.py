@@ -212,6 +212,15 @@ class aggregated_elb ( aggregated_metric ) :
     def input_value ( self , datastr ) :
         return weighted(datastr, self.healthy)
 
+    def update ( self , sock ) :
+        date = time.time()
+        for hostname in self.hostnames() :
+            for metric in self.metric_list :
+                sock.send("GETVAL %s/%s\n" % (hostname,metric))
+                data = recv(sock)
+                if data :
+                    self[date] = data.split('=')[1]
+
     def hostnames ( self ) :
         instances = boto.ec2.elb.connect_to_region("eu-west-1") \
                                 .get_all_load_balancers([self.elbname])[0] \

@@ -40,16 +40,7 @@ if __name__ == '__main__' :
     sock = socket.socket( socket.AF_UNIX )
     sock.connect( unixsock )
 
-    date = time.time()
-
-    for hostname in metric.hostnames() :
-
-     for m in metric.metric_list :
-      sock.send("GETVAL %s/%s\n" % (hostname,m))
-      data = recv(sock)
-
-      if data :
-          metric[date] = data.split('=')[1]
+    metric.update( sock )
 
     if metric.full() :
 
