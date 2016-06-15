@@ -13,7 +13,7 @@ backend:
     - threshold: -10
       methods:
         - five_mins
-  policy: ScaleOneUp
+  action: autoscale:ScaleOneUp
 
 recommender:
   metric_list:
@@ -24,5 +24,5 @@ recommender:
       methods:
         - two_sigma
         - one_tenth
-  policy: ScaleOneUp
+  action: autoscale:ScaleOneUp
 

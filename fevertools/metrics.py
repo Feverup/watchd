@@ -1,4 +1,6 @@
 
+import boto.ec2.autoscale
+
 import array
 import math
 import datetime
@@ -78,11 +80,13 @@ def sign ( value ) :
 
 class aggregated_metric ( dict ) :
 
-    def __init__ ( self , statistics , minsize=5 , length=10 ) :
+    def __init__ ( self , config , minsize=5 , length=10 ) :
+        self.metric_list = config['metric_list']
         self.tstamp = None
         self.minsize = minsize
         self.length = length
-        self.statistics = statistics
+        self.statistics = config['statistics']
+        self.action = get_action( config['action'] )
         dict.__init__( self )
 
     def unshift ( self ) :
@@ -199,11 +203,11 @@ import boto.ec2.elb
 
 class aggregated_elb ( aggregated_metric ) :
 
-    def __init__ ( self , elbname , minsize=5 , length=10 ) :
+    def __init__ ( self , config , minsize=5 , length=10 ) :
         self.count = None
         self.healthy = None
-        self.elbname = elbname
-        aggregated_metric.__init__ ( self , minsize , length )
+        self.elbname = config['elbname']
+        aggregated_metric.__init__ ( self , config , minsize , length )
 
     def input_value ( self , datastr ) :
         return weighted(datastr, self.healthy)
@@ -221,4 +225,22 @@ class aggregated_elb ( aggregated_metric ) :
 
     def __str__ ( self ) :
         return "elb: %s/%s , %s" % ( self.healthy , self.count , aggregated_metric.__str__(self) )
+
+def get_action ( action ) :
+    action , param = action.split(':',1)
+    if action == 'autoscale' :
+        return autoscale_action( param )
+    raise Exception( "ERROR: action '%s' unknown" % action )
+
+class autoscale_action :
+
+    def __init__ ( self , policy ) :
+        self.policy = policy
+
+    def run ( self , groupname ) :
+        autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
+        try :
+            autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
+        except boto.exception.BotoServerError , ex :
+            os.sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
 

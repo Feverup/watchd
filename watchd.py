@@ -5,7 +5,6 @@ from fevertools import elb_group
 
 import boto.ec2
 import boto.ec2.elb
-import boto.ec2.autoscale
 
 import yaml
 
@@ -18,8 +17,8 @@ unixsock = '/var/run/collectd-unixsock'
 
 if __name__ == '__main__' :
 
-  if len(os.sys.argv) != 2 :
-      print "Usage: %s section" % os.sys.argv[0].split('.')[-1]
+  if len(os.sys.argv) != 1 :
+      print "Usage: %s" % os.sys.argv[0].split('.')[-1]
       os.sys.exit(2)
 
   if os.fork() :
@@ -30,41 +29,32 @@ if __name__ == '__main__' :
       conf_file = os.path.join( '/etc' , config )
   with open( config ) as fd :
       config = yaml.load( fd )
-  if not config.has_key( os.sys.argv[1] ) :
-      print "ERROR: no section named '%s' on onfiguration file" % os.sys.argv[1]
-      os.sys.exit(1)
 
-  metric_list = config[os.sys.argv[1]]['metric_list']
-  elbname = config[os.sys.argv[1]]['elbname']
-  policy = config[os.sys.argv[1]]['policy']
-  statistics = config[os.sys.argv[1]]['statistics']
-
-  metrics = aggregated_elb(elbname, statistics)
+  metrics = []
+  for name in config :
+      metrics.append( aggregated_elb(config[name]) )
 
   while True :
 
+   for metric in metrics :
     sock = socket.socket( socket.AF_UNIX )
     sock.connect( unixsock )
 
     date = time.time()
 
-    for hostname in metrics.hostnames() :
+    for hostname in metric.hostnames() :
 
-     for metric in metric_list :
-      sock.send("GETVAL %s/%s\n" % (hostname,metric))
+     for m in metric.metric_list :
+      sock.send("GETVAL %s/%s\n" % (hostname,m))
       data = recv(sock)
 
       if data :
-          metrics[date] = float(data.split('=')[1])
+          metric[date] = data.split('=')[1]
 
-    if metrics.full() :
+    if metric.full() :
 
-      if metrics.check_thresholds() :
-        autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
-        try :
-            autoscale.execute_policy( policy , as_group=elb_group(elbname) , honor_cooldown=1 )
-        except boto.exception.BotoServerError , ex :
-            print "WARNING : autoscaling error '%s': %s" % ( ex.error_code , ex.message )
+      if metric.check_thresholds() :
+        metric.action.run( elb_group(metric.elbname) )
 
-    time.sleep(60)
+   time.sleep(60)
 
