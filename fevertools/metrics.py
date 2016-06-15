@@ -242,5 +242,5 @@ class autoscale_action :
         try :
             autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
         except boto.exception.BotoServerError , ex :
-            os.sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
+            sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
 
