@@ -206,13 +206,7 @@ class aggregated_metric ( dict ) :
 import boto.ec2
 import boto.ec2.elb
 
-class aggregated_elb ( aggregated_metric ) :
-
-    def __init__ ( self , config , minsize=5 , length=10 ) :
-        self.count = None
-        self.healthy = None
-        self.elbname = config['elbname']
-        aggregated_metric.__init__ ( self , config , minsize , length )
+class weighted_metric ( dict ) :
 
     def input_value ( self , datastr ) :
         return weighted(datastr, self.healthy)
@@ -225,6 +219,17 @@ class aggregated_elb ( aggregated_metric ) :
         sd  = math.sqrt( sum(data2) / n - mean*mean )
         return mean , sd
 
+class aggregated_elb ( aggregated_metric ) :
+
+    def __init__ ( self , config , minsize=5 , length=10 ) :
+        self.count = None
+        self.healthy = None
+        self.elbname = config['elbname']
+        aggregated_metric.__init__ ( self , config , minsize , length )
+
+    def input_value ( self , datastr ) :
+        return aggregated_metric.input_value( self , datastr ) * self.healthy
+
     def hostnames ( self ) :
         instances = boto.ec2.elb.connect_to_region("eu-west-1") \
                                 .get_all_load_balancers([self.elbname])[0] \
@@ -235,6 +240,15 @@ class aggregated_elb ( aggregated_metric ) :
         instances = boto.ec2.connect_to_region("eu-west-1") \
                        .get_only_instances(in_service)
         return [ str(i.private_dns_name.split('.')[0]) for i in instances ]
+
+    def two_sigma ( self , interval ) :
+        return aggregated_metric.two_sigma( self , interval ) / self.healthy
+
+    def one_tenth ( self , interval ) :
+        return aggregated_metric.one_tenth( self , interval ) / self.healthy
+
+    def five_mins ( self , interval ) :
+        return aggregated_metric.five_mins( self , interval ) / self.healthy
 
     def __str__ ( self ) :
         return "elb: %s/%s , %s" % ( self.healthy , self.count , aggregated_metric.__str__(self) )
