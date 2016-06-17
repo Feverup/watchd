@@ -24,7 +24,7 @@ class test_metric ( fevertools.metrics.aggregated_metric ) :
 wstream1 = "1466008406 4 13.0 15.0 16.0 17.0"
 wstream2 = "1466008466 2 28.0 32.0"
 
-class test_weighted ( fevertools.metrics.aggregated_elb ) :
+class test_weighted ( fevertools.metrics.weighted_metric ) :
 
     @classmethod
     def from_datastream ( cls , config , *streams ) :
@@ -32,10 +32,9 @@ class test_weighted ( fevertools.metrics.aggregated_elb ) :
         for stream in streams :
             tstamp , healthy , values = stream.split(None,2)
             tstamp = int(tstamp)
-            obj.count = int(healthy)
-            obj.healthy = int(healthy)
+            weight = float(healthy)
             for val in values.split() :
-                obj[tstamp] = val
+                obj[tstamp] = val , weight
         return obj
 
 

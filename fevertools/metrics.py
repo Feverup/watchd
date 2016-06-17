@@ -32,10 +32,10 @@ def recv( sock , buffsize=1024 ) :
 
 class weighted ( float ) :
 
-    def __new__ ( cls , value , weight=1.0 ) :
+    def __new__ ( cls , value , weight ) :
         return super( weighted , cls ).__new__( cls , value )
 
-    def __init__ ( self , value , weight=1.0 ) :
+    def __init__ ( self , value , weight ) :
         self.weight = weight
 
     def __add__ ( self , other ) :
@@ -206,10 +206,12 @@ class aggregated_metric ( dict ) :
 import boto.ec2
 import boto.ec2.elb
 
-class weighted_metric ( dict ) :
+class weighted_metric ( aggregated_metric ) :
 
     def input_value ( self , datastr ) :
-        return weighted(datastr, self.healthy)
+        if isinstance(datastr, tuple) :
+            return weighted(*datastr)
+        return weighted(datastr, 1.0)
 
     def mean ( self , interval=0 ) :
         data = self.last(interval)
