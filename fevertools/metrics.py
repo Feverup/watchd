@@ -132,10 +132,10 @@ class aggregated_metric ( dict ) :
 
     def two_sigma ( self , interval ) :
       mean , sd = self.mean(interval)
-      return mean - 2 * sd
+      return mean + 2 * sd
 
     def one_tenth ( self , interval ) :
-      return self.quantile(0.1, interval)
+      return self.quantile(0.9, interval)
 
     # prediction will use all collected values
     def five_mins ( self , interval ) :
@@ -230,7 +230,7 @@ class aggregated_elb ( aggregated_metric ) :
         aggregated_metric.__init__ ( self , config , minsize , length )
 
     def input_value ( self , datastr ) :
-        return aggregated_metric.input_value( self , datastr ) * self.healthy
+        return ( 100 - aggregated_metric.input_value( self , datastr ) ) * self.healthy
 
     def hostnames ( self ) :
         instances = boto.ec2.elb.connect_to_region("eu-west-1") \

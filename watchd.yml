@@ -6,11 +6,11 @@ backend:
     - cpu-1/cpu-idle
   elbname: front-balancer
   statistics:
-    - threshold: -20
+    - threshold: 80
       methods:
         - two_sigma
         - one_tenth
-    - threshold: -10
+    - threshold: 90
       methods:
         - five_mins
   action: autoscale:ScaleOneUp
@@ -20,7 +20,7 @@ recommender:
     - cpu-0/cpu-idle
   elbname: recommender
   statistics:
-    - threshold: -20
+    - threshold: 80
       methods:
         - two_sigma
         - one_tenth
