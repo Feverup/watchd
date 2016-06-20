@@ -230,6 +230,8 @@ class aggregated_elb ( aggregated_metric ) :
         aggregated_metric.__init__ ( self , config , minsize , length )
 
     def input_value ( self , datastr ) :
+        if not self.healthy :
+            return aggregated_metric.input_value( self , 'nan' )
         return ( 100 - aggregated_metric.input_value( self , datastr ) ) * self.healthy
 
     def hostnames ( self ) :
@@ -244,12 +246,18 @@ class aggregated_elb ( aggregated_metric ) :
         return [ str(i.private_dns_name.split('.')[0]) for i in instances ]
 
     def two_sigma ( self , interval ) :
+        if not self.healthy :
+            return float('nan')
         return aggregated_metric.two_sigma( self , interval ) / self.healthy
 
     def one_tenth ( self , interval ) :
+        if not self.healthy :
+            return float('nan')
         return aggregated_metric.one_tenth( self , interval ) / self.healthy
 
     def five_mins ( self , interval ) :
+        if not self.healthy :
+            return float('nan')
         return aggregated_metric.five_mins( self , interval ) / self.healthy
 
     def __str__ ( self ) :
