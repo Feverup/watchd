@@ -85,10 +85,10 @@ def sign ( value ) :
 
 class aggregated_metric ( dict ) :
 
-    def __init__ ( self , config , minsize=5 , length=10 ) :
+    def __init__ ( self , config , window=5 , length=10 ) :
         self.metric_list = config['metric_list']
         self.tstamp = None
-        self.minsize = minsize
+        self.window = window
         self.length = length
         self.statistics = config['statistics']
         self.action = get_action( config['action'] )
@@ -112,7 +112,7 @@ class aggregated_metric ( dict ) :
             self.unshift()
 
     def full ( self ) :
-        return len(self) > self.minsize
+        return len(self) > self.window
 
     def last ( self , interval=0 ) :
         if not interval :
@@ -122,7 +122,9 @@ class aggregated_metric ( dict ) :
         tstamp = time.time() - interval
         return [ i for k in self.keys() for i in self[k] if k > tstamp ]
 
-    def check_thresholds ( self , interval=-1 ) :
+    def check_thresholds ( self , interval=None ) :
+     if interval is None :
+         interval = 60 * self.window
      output = []
      for statistic in self.statistics :
       methods = [ getattr(self, s) for s in statistic['methods'] ]
@@ -223,11 +225,11 @@ class weighted_metric ( aggregated_metric ) :
 
 class aggregated_elb ( aggregated_metric ) :
 
-    def __init__ ( self , config , minsize=5 , length=10 ) :
+    def __init__ ( self , config , window=5 , length=10 ) :
         self.count = None
         self.healthy = None
         self.elbname = config['elbname']
-        aggregated_metric.__init__ ( self , config , minsize , length )
+        aggregated_metric.__init__ ( self , config , window , length )
 
     def input_value ( self , datastr ) :
         if not self.healthy :
