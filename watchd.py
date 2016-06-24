@@ -42,7 +42,7 @@ if __name__ == '__main__' :
 
     date = time.time()
 
-    for hostname in metric.hostnames() :
+    for hostname in metric.hostnames(date) :
 
      for m in metric.metric_list :
       sock.send("GETVAL %s/%s\n" % (hostname,m))

@@ -230,22 +230,29 @@ class aggregated_elb ( aggregated_metric ) :
         self.healthy = None
         self.elbname = config['elbname']
         aggregated_metric.__init__ ( self , config , window , length )
+        self.date = None
 
     def input_value ( self , datastr ) :
         if not self.healthy :
             return aggregated_metric.input_value( self , 'nan' )
         return ( 100 - aggregated_metric.input_value( self , datastr ) ) * self.healthy
 
-    def hostnames ( self ) :
+    def hostnames ( self , date ) :
         instances = boto.ec2.elb.connect_to_region("eu-west-1") \
                                 .get_all_load_balancers([self.elbname])[0] \
                                 .get_instance_health()
         in_service = [ i.instance_id for i in instances if i.state == 'InService' ]
+        if self.count != len(instances) :
+            self.date = date
         self.count = len(instances)
         self.healthy = len(in_service)
         instances = boto.ec2.connect_to_region("eu-west-1") \
                        .get_only_instances(in_service)
         return [ str(i.private_dns_name.split('.')[0]) for i in instances ]
+
+    def __setitem__ ( self , key , valstr ) :
+        if self.date != key :
+            aggregated_metric.__setitem__( self , key , valstr )
 
     def two_sigma ( self , interval ) :
         if not self.healthy :
