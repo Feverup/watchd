@@ -168,7 +168,7 @@ class aggregated_metric ( dict ) :
 
         # t_0 is set so that prediction is at t=0
         if delta :
-            t_0 = time.time() + delta
+            t_0 = time.time() + t_0
         x, y = [], []
 
         for tstamp in self.keys() :
