@@ -1,4 +1,6 @@
 
+from fevertools import elb_group
+
 import boto.ec2.autoscale
 
 import math
@@ -123,14 +125,14 @@ class aggregated_metric ( dict ) :
         return [ i for k in self.keys() for i in self[k] if k > tstamp ]
 
     def check_thresholds ( self , interval=None ) :
-     if interval is None :
-         interval = 60 * self.window
-     output = []
-     for statistic in self.statistics :
-      methods = [ getattr(self, s) for s in statistic['methods'] ]
-      values = [ method(interval) for method in methods ]
-      output.extend( [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] )
-     return output
+        if interval is None :
+            interval = 60 * self.window
+        if self.full() :
+            for statistic in self.statistics :
+                methods = [ getattr(self, s) for s in statistic['methods'] ]
+                values = [ method(interval) for method in methods ]
+                if [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] :
+                    return self.action.run( elb_group(self.elbname) )
 
     def two_sigma ( self , interval ) :
       mean , sd = self.mean(interval)
@@ -239,6 +241,15 @@ class aggregated_elb ( aggregated_metric ) :
         if not self.healthy :
             return aggregated_metric.input_value( self , 'nan' )
         return ( 100 - aggregated_metric.input_value( self , datastr ) ) * self.healthy
+
+    def update ( self , sock ) :
+        date = time.time()
+        for hostname in self.hostnames(date) :
+            for metric in self.metric_list :
+                sock.send("GETVAL %s/%s\n" % (hostname,metric))
+                data = recv(sock)
+                if data :
+                    self[date] = data.split('=')[1]
 
     def hostnames ( self , date ) :
         instances = boto.ec2.elb.connect_to_region("eu-west-1") \

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 from fevertools import recv, aggregated_elb
-from fevertools import elb_group
 
 import boto.ec2
 import boto.ec2.elb
@@ -40,21 +39,8 @@ if __name__ == '__main__' :
     sock = socket.socket( socket.AF_UNIX )
     sock.connect( unixsock )
 
-    date = time.time()
-
-    for hostname in metric.hostnames(date) :
-
-     for m in metric.metric_list :
-      sock.send("GETVAL %s/%s\n" % (hostname,m))
-      data = recv(sock)
-
-      if data :
-          metric[date] = data.split('=')[1]
-
-    if metric.full() :
-
-      if metric.check_thresholds() :
-        metric.action.run( elb_group(metric.elbname) )
+    metric.update( sock )
+    metric.check_thresholds()
 
    time.sleep(60)
 
