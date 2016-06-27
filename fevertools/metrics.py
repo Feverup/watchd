@@ -176,34 +176,37 @@ class aggregated_metric ( dict ) :
                 x.append(tstamp - t_0)
                 y.append(float(v))
 
-        N, X, Y = len(x), sum(x), sum(y)
-
-        def pow2(x):
-            return x * x
-        x2 = sum(map(pow2, x))
-        # Y2 = sum(map(pow2, y))
-        xy = zip(x, y)
-        _XY = sum(map(lambda p: p[0] * p[1], xy))
-        det = N * x2 - X * X
-
-        b = (N * _XY - X * Y) / det
-        a = (Y - b * X) / N
-
-        # SSY = sum(map(lambda p: pow2(p[1] - Y / N), xy))
-        # SSR = sum(map(lambda p: pow2(p[1] - (a + b * p[0])), xy))
-
-        # R2 = 1 - SSR / SSY
-        # e_b = math.sqrt(SSR / (N - 2)) * math.sqrt(N / det)
-        # e_a = math.sqrt(SSR / (N - 2)) * math.sqrt(x2 / det)
-
-        # As we use prediction time as origin, axis crossing is the predicted value
-        return a
+        fit = lm( x , y )
+        return fit[0]
 
     def __str__ ( self ) :
         vals_str = {}
         for k in self.keys() :
             vals_str[k] = map(str, self[k])
         return "size: %d\n%s" % ( len(self) , "\n".join( [ "%s %s" % ( k , vals_str[k] ) for k in self.keys() ] ) )
+
+def lm ( x , y ) :
+
+    xy = zip(x, y)
+
+    N, X, Y = len(x), sum(x), sum(y)
+    X2 = sum([v*v for v in x])
+    XY = sum(map(lambda p: p[0] * p[1], xy))
+
+    det = N * X2 - X * X
+    b = (N * XY - X * Y) / det
+    a = (Y - b * X) / N
+
+    # SSY = sum(map(lambda p: pow2(p[1] - Y / N), xy))
+    # SSR = sum(map(lambda p: pow2(p[1] - (a + b * p[0])), xy))
+
+    # R2 = 1 - SSR / SSY
+    # e_b = math.sqrt(SSR / (N - 2)) * math.sqrt(N / det)
+    # e_a = math.sqrt(SSR / (N - 2)) * math.sqrt(X2 / det)
+
+    # As we use prediction time as origin, axis crossing is the predicted value
+    return a , b
+
 
 import boto.ec2
 import boto.ec2.elb
