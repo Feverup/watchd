@@ -42,5 +42,8 @@ if __name__ == '__main__' :
     metric.update( sock )
     metric.check_thresholds()
 
+   with open('/var/lib/nagios3/rw/nagios.cmd', 'a+') as fd :
+        fd.write( "[%d] PROCESS_SERVICE_CHECK_RESULT;admin11;watchd;0;watchd OK - service running\n" % time.time() )
+
    time.sleep(60)
 
