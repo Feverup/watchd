@@ -2,6 +2,7 @@
 from fevertools import elb_group
 
 import boto.ec2.autoscale
+import urllib2
 
 import math
 import datetime
@@ -290,6 +291,8 @@ def get_action ( action ) :
     action , param = action.split(':',1)
     if action == 'autoscale' :
         return autoscale_action( param )
+    elif action == 'http' :
+        return http_action( param )
     raise Exception( "ERROR: action '%s' unknown" % action )
 
 class autoscale_action :
@@ -303,4 +306,17 @@ class autoscale_action :
             autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
         except boto.exception.BotoServerError , ex :
             sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
+
+class http_action :
+
+    def __init__ ( self , url ) :
+        self.url = "http:%s" % url
+
+    def run ( self , groupname ) :
+        try :
+            res = urllib2.urlopen(self.url)
+            if res.getcode() != 200 :
+                sys.stdout.write( "WARNING : %s returned '%s'\n" % ( self.url , res.getcode() ) )
+        except urllib2.URLError , ex :
+            sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( self.url , ex.reason ) )
 
