@@ -313,10 +313,11 @@ class http_action :
         self.url = "http:%s" % url
 
     def run ( self , groupname ) :
+        url = self.url.format( groupname=groupname )
         try :
-            res = urllib2.urlopen(self.url)
+            res = urllib2.urlopen(url)
             if res.getcode() != 200 :
-                sys.stdout.write( "WARNING : %s returned '%s'\n" % ( self.url , res.getcode() ) )
+                sys.stdout.write( "WARNING : %s returned '%s'\n" % ( url , res.getcode() ) )
         except urllib2.URLError , ex :
-            sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( self.url , ex.reason ) )
+            sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( url , ex.reason ) )
 
