@@ -1,5 +1,5 @@
 
-from fevertools import elb_group
+from fevertools import elb_group, fever_config
 
 import boto.ec2.autoscale
 import urllib2
@@ -313,7 +313,7 @@ class http_action :
         self.url = "http:%s" % url
 
     def run ( self , groupname ) :
-        url = self.url.format( groupname=groupname )
+        url = self.url.format( groupname=groupname , production=fever_config()['production'] )
         try :
             res = urllib2.urlopen(url)
             if res.getcode() != 200 :
