@@ -256,7 +256,7 @@ class aggregated_elb ( aggregated_metric ) :
                                 .get_all_load_balancers([self.elbname])[0] \
                                 .get_instance_health()
         in_service = [ i.instance_id for i in instances if i.state == 'InService' ]
-        if self.count != len(instances) :
+        if self.count != len(instances) or self.healthy != len(in_service):
             self.date = date
         self.count = len(instances)
         self.healthy = len(in_service)
