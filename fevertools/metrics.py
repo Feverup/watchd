@@ -8,7 +8,8 @@ import datetime
 import time
 import sys
 
-def recv( sock , buffsize=1024 ) :
+def recv( sock , metric , command='GETVAL' , buffsize=1024 ) :
+    sock.send("%s %s\n" % (command,metric))
     data = sock.recv(buffsize)
     while data.find(' ') < 0 :
         data += sock.recv(buffsize)
@@ -26,7 +27,7 @@ def recv( sock , buffsize=1024 ) :
     response_size , status_line = items.pop(0).split(None, 1)
     if size == 2 :
         if response_size == '-1' :
-            sys.stderr.write( "ERROR : %s %s\n" % ( datetime.datetime.now() , status_line ) )
+            sys.stderr.write( "ERROR : %s , %s %s gave %s\n" % ( datetime.datetime.now() , command , metric , status_line ) )
         return
     elif size == 3 :
         return items[0]
@@ -246,8 +247,7 @@ class aggregated_elb ( aggregated_metric ) :
         date = time.time()
         for hostname in self.hostnames(date) :
             for metric in self.metric_list :
-                sock.send("GETVAL %s/%s\n" % (hostname,metric))
-                data = recv(sock)
+                data = recv(sock, "%s/%s" % (hostname,metric))
                 if data :
                     self[date] = data.split('=')[1]
 

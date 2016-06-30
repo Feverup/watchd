@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from fevertools import recv, aggregated_elb
+from fevertools import aggregated_elb
 
 import boto.ec2
 import boto.ec2.elb
