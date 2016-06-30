@@ -2,7 +2,9 @@
 from fevertools import elb_group, fever_config
 
 import boto.ec2.autoscale
-import urllib2
+
+import urllib, urllib2
+import uuid
 
 import math
 import datetime
@@ -293,6 +295,8 @@ def get_action ( action ) :
         return autoscale_action( param )
     elif action == 'http' :
         return http_action( param )
+    elif action == 'post' :
+        return post_action( param )
     raise Exception( "ERROR: action '%s' unknown" % action )
 
 class autoscale_action :
@@ -320,4 +324,26 @@ class http_action :
                 sys.stdout.write( "WARNING : %s returned '%s'\n" % ( url , res.getcode() ) )
         except urllib2.URLError , ex :
             sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( url , ex.reason ) )
+
+class post_action :
+
+    payload = """{
+  "Type" : "watchd",
+  "id":"%s",
+  "tstamp":"%s",
+  "metric" : "%s",
+  "alarm" : "%s"
+}"""
+
+    def __init__ ( self , url ) :
+        self.url = "http://%s/" % url
+
+    def run ( self , groupname ) :
+        data = self.payload % ( uuid.uuid1() , datetime.datetime.now() , groupname , 'low' )
+        try :
+            res = urllib2.urlopen(self.url, data)
+            if res.getcode() not in ( 200 , 202 ) :
+                sys.stdout.write( "WARNING : %s returned '%s'\n" % ( res.geturl() , res.getcode() ) )
+        except urllib2.URLError , ex :
+            sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( res.geturl() , ex.reason ) )
 
