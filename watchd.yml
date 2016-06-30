@@ -16,6 +16,7 @@ backend:
   action: autoscale:ScaleOneUp
 
 recommender:
+  logfile: true
   metric_list:
     - cpu-0/cpu-idle
   elbname: recommender

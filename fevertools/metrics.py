@@ -6,7 +6,7 @@ import boto.ec2.autoscale
 import math
 import datetime
 import time
-import sys
+import os
 
 def recv( sock , metric , command='GETVAL' , buffsize=1024 ) :
     sock.send("%s %s\n" % (command,metric))
@@ -27,7 +27,7 @@ def recv( sock , metric , command='GETVAL' , buffsize=1024 ) :
     response_size , status_line = items.pop(0).split(None, 1)
     if size == 2 :
         if response_size == '-1' :
-            sys.stderr.write( "ERROR : %s , %s %s gave %s\n" % ( datetime.datetime.now() , command , metric , status_line ) )
+            os.sys.stderr.write( "ERROR : %s , %s %s gave %s\n" % ( datetime.datetime.now() , command , metric , status_line ) )
         return
     elif size == 3 :
         return items[0]
@@ -91,6 +91,7 @@ class aggregated_metric ( dict ) :
     def __init__ ( self , config , window=5 , length=10 ) :
         self.metric_list = config['metric_list']
         self.tstamp = None
+        self.logfile = config.get('logfile', False)
         self.window = window
         self.length = length
         self.statistics = config['statistics']
@@ -182,6 +183,12 @@ class aggregated_metric ( dict ) :
         fit = lm( x , y )
         return fit[0]
 
+    def dump ( self , interval ) :
+        output  = "%7.2f %5.2f" % self.mean(interval)
+        output += "%7.2f %7.2f" % ( self.one_tenth(interval) , self.five_mins(interval) )
+        output += " :: " +  " , ".join( [ "%7.2f" % v for v in self.last(interval) ] )
+        return output
+
     def __str__ ( self ) :
         vals_str = {}
         for k in self.keys() :
@@ -251,6 +258,10 @@ class aggregated_elb ( aggregated_metric ) :
                 if data :
                     self[date] = data.split('=')[1]
 
+        if self.date != date and self.logfile :
+            with open( '%s.out' % self.elbname , 'a+' ) as fd :
+                fd.write( "%s %14.2f %s\n" % ( datetime.datetime.now() , date , self.dump(60*self.window) ) )
+
     def hostnames ( self , date ) :
         instances = boto.ec2.elb.connect_to_region("eu-west-1") \
                                 .get_all_load_balancers([self.elbname])[0] \
@@ -283,6 +294,11 @@ class aggregated_elb ( aggregated_metric ) :
             return float('nan')
         return aggregated_metric.five_mins( self , interval ) / self.healthy
 
+    def dump ( self , interval ) :
+        output = "%s %s " % ( self.count-self.healthy , self.count )
+        output += aggregated_metric.dump( self , interval )
+        return output
+
     def __str__ ( self ) :
         return "elb: %s/%s , %s" % ( self.healthy , self.count , aggregated_metric.__str__(self) )
 
@@ -302,5 +318,5 @@ class autoscale_action :
         try :
             autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
         except boto.exception.BotoServerError , ex :
-            sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
+            os.sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
 
