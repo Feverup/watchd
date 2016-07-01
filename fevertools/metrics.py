@@ -95,7 +95,7 @@ class alarm :
         self.name = params['alarm']
         self.interval = params.get('interval', window) * 60
         self.statistics = params['statistics']
-        self.action = get_action( params['action'] )
+        self.action = get_action( params['action'] , self.name )
 
 class aggregated_metric ( dict ) :
 
@@ -315,14 +315,14 @@ class aggregated_elb ( aggregated_metric ) :
     def __str__ ( self ) :
         return "elb: %s/%s , %s" % ( self.healthy , self.count , aggregated_metric.__str__(self) )
 
-def get_action ( action ) :
+def get_action ( action , alarm_name ) :
     action , param = action.split(':',1)
     if action == 'autoscale' :
         return autoscale_action( param )
     elif action == 'http' :
         return http_action( param )
     elif action == 'post' :
-        return post_action( param )
+        return post_action( param , alarm_name )
     raise Exception( "ERROR: action '%s' unknown" % action )
 
 class autoscale_action :
@@ -361,11 +361,12 @@ class post_action :
   "alarm" : "%s"
 }"""
 
-    def __init__ ( self , url ) :
+    def __init__ ( self , url , name ) :
+        self.alarm = name
         self.url = "http://%s/" % url
 
     def run ( self , groupname ) :
-        data = self.payload % ( uuid.uuid1() , datetime.datetime.now() , groupname , 'low' )
+        data = self.payload % ( uuid.uuid1() , datetime.datetime.now() , groupname , self.alarm )
         try :
             res = urllib2.urlopen(self.url, data)
             if res.getcode() not in ( 200 , 202 ) :
