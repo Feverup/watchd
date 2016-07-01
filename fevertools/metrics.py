@@ -94,6 +94,10 @@ class aggregated_metric ( dict ) :
         self.logfile = config.get('logfile', False)
         self.window = window
         self.length = length
+        if config.has_key('interval') :
+            self.interval = config['interval'] * 60
+        else :
+            self.interval = 60 * window
         self.statistics = config['statistics']
         self.action = get_action( config['action'] )
         dict.__init__( self )
@@ -118,7 +122,7 @@ class aggregated_metric ( dict ) :
     def full ( self ) :
         return len(self) > self.window
 
-    def last ( self , interval=0 ) :
+    def last ( self , interval ) :
         if not interval :
             return self[self.tstamp]
         elif interval < 0 :
@@ -128,7 +132,7 @@ class aggregated_metric ( dict ) :
 
     def check_thresholds ( self , interval=None ) :
         if interval is None :
-            interval = 60 * self.window
+            interval = self.interval
         if self.full() :
             for statistic in self.statistics :
                 methods = [ getattr(self, s) for s in statistic['methods'] ]
@@ -147,7 +151,7 @@ class aggregated_metric ( dict ) :
     def five_mins ( self , interval ) :
       return self.predict(5*60)
 
-    def mean ( self , interval=0 ) :
+    def mean ( self , interval ) :
         data = self.last(interval)
         n = len(data)
         mean = sum(data) / n
@@ -155,7 +159,7 @@ class aggregated_metric ( dict ) :
         sd  = math.sqrt( sum(data2) / n - mean*mean )
         return mean , sd
 
-    def quantile ( self , prob , interval=0 ) :
+    def quantile ( self , prob , interval ) :
         data = self.last(interval)
         n = len(data)
         # As indexes start at 0, we use floor instead of ceil for percentile index
@@ -228,7 +232,7 @@ class weighted_metric ( aggregated_metric ) :
             return weighted(*datastr)
         return weighted(datastr, 1.0)
 
-    def mean ( self , interval=0 ) :
+    def mean ( self , interval ) :
         data = self.last(interval)
         n = sum( [ v.weight for v in data ] )
         mean = sum( [ v.scaled() for v in data ] ) / n

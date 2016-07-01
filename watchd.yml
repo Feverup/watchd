@@ -20,6 +20,7 @@ recommender:
   metric_list:
     - cpu-0/cpu-idle
   elbname: recommender
+  interval: 5
   statistics:
     - threshold: 80
       methods:
