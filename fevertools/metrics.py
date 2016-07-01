@@ -91,9 +91,12 @@ def sign ( value ) :
 
 class alarm :
 
-    def __init__ ( self , params , window ) :
+    def __init__ ( self , params , metric ) :
         self.name = params['alarm']
-        self.interval = params.get('interval', window) * 60
+        interval = params.get('interval', metric.window)
+        if interval > metric.length :
+            metric.length = interval + 5
+        self.interval = interval * 60
         self.statistics = params['statistics']
         self.action = get_action( params['action'] , self.name )
 
@@ -107,7 +110,7 @@ class aggregated_metric ( dict ) :
         self.length = length
         self.alarms = []
         for params in config['alarms'] :
-            self.alarms.append( alarm(params, window) )
+            self.alarms.append( alarm(params, self) )
         dict.__init__( self )
 
     def unshift ( self ) :
