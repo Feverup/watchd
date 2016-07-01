@@ -1,7 +1,10 @@
 
-from fevertools import elb_group
+from fevertools import elb_group, fever_config
 
 import boto.ec2.autoscale
+
+import urllib, urllib2
+import uuid
 
 import math
 import datetime
@@ -310,6 +313,10 @@ def get_action ( action ) :
     action , param = action.split(':',1)
     if action == 'autoscale' :
         return autoscale_action( param )
+    elif action == 'http' :
+        return http_action( param )
+    elif action == 'post' :
+        return post_action( param )
     raise Exception( "ERROR: action '%s' unknown" % action )
 
 class autoscale_action :
@@ -323,4 +330,40 @@ class autoscale_action :
             autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
         except boto.exception.BotoServerError , ex :
             os.sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
+
+class http_action :
+
+    def __init__ ( self , url ) :
+        self.url = "http:%s" % url
+
+    def run ( self , groupname ) :
+        url = self.url.format( groupname=groupname , production=fever_config()['production'] )
+        try :
+            res = urllib2.urlopen(url)
+            if res.getcode() != 200 :
+                sys.stdout.write( "WARNING : %s returned '%s'\n" % ( url , res.getcode() ) )
+        except urllib2.URLError , ex :
+            sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( url , ex.reason ) )
+
+class post_action :
+
+    payload = """{
+  "Type" : "watchd",
+  "id":"%s",
+  "tstamp":"%s",
+  "metric" : "%s",
+  "alarm" : "%s"
+}"""
+
+    def __init__ ( self , url ) :
+        self.url = "http://%s/" % url
+
+    def run ( self , groupname ) :
+        data = self.payload % ( uuid.uuid1() , datetime.datetime.now() , groupname , 'low' )
+        try :
+            res = urllib2.urlopen(self.url, data)
+            if res.getcode() not in ( 200 , 202 ) :
+                sys.stdout.write( "WARNING : %s returned '%s'\n" % ( res.geturl() , res.getcode() ) )
+        except urllib2.URLError , ex :
+            sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( res.geturl() , ex.reason ) )
 
