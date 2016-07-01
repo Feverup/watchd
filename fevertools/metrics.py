@@ -147,7 +147,8 @@ class aggregated_metric ( dict ) :
                 methods = [ getattr(self, s) for s in statistic['methods'] ]
                 values = [ method(interval) for method in methods ]
                 if [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] :
-                    return alarm.action.run( elb_group(self.elbname) )
+                    alarm.action.run( elb_group(self.elbname) )
+                    break
 
     def two_sigma ( self , interval ) :
       mean , sd = self.mean(interval)
