@@ -97,12 +97,13 @@ class aggregated_metric ( dict ) :
         self.logfile = config.get('logfile', False)
         self.window = window
         self.length = length
-        if config.has_key('interval') :
-            self.interval = config['interval'] * 60
-        else :
-            self.interval = 60 * window
-        self.statistics = config['statistics']
-        self.action = get_action( config['action'] )
+        for alarm in config['alarms'] :
+            if alarm.has_key('interval') :
+                self.interval = alarm['interval'] * 60
+            else :
+                self.interval = 60 * window
+            self.statistics = alarm['statistics']
+            self.action = get_action( alarm['action'] )
         dict.__init__( self )
 
     def unshift ( self ) :
