@@ -31,4 +31,11 @@ recommender:
             - two_sigma
             - one_tenth
       action: autoscale:ScaleOneUp
+    - alarm: low
+      interval: 25
+      statistics:
+        - threshold: -30
+          methods:
+            - two_sigma
+      action: post:10.0.0.251:8000
 

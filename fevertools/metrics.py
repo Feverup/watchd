@@ -89,6 +89,14 @@ def sign ( value ) :
     floatsign = math.copysign(1, value)
     return int(floatsign)
 
+class alarm :
+
+    def __init__ ( self , params , window ) :
+        self.name = params['alarm']
+        self.interval = params.get('interval', window) * 60
+        self.statistics = params['statistics']
+        self.action = get_action( params['action'] )
+
 class aggregated_metric ( dict ) :
 
     def __init__ ( self , config , window=5 , length=10 ) :
@@ -97,13 +105,9 @@ class aggregated_metric ( dict ) :
         self.logfile = config.get('logfile', False)
         self.window = window
         self.length = length
-        for alarm in config['alarms'] :
-            if alarm.has_key('interval') :
-                self.interval = alarm['interval'] * 60
-            else :
-                self.interval = 60 * window
-            self.statistics = alarm['statistics']
-            self.action = get_action( alarm['action'] )
+        self.alarms = []
+        for params in config['alarms'] :
+            self.alarms.append( alarm(params, window) )
         dict.__init__( self )
 
     def unshift ( self ) :
@@ -135,14 +139,15 @@ class aggregated_metric ( dict ) :
         return [ i for k in self.keys() for i in self[k] if k > tstamp ]
 
     def check_thresholds ( self , interval=None ) :
+      for alarm in self.alarms :
         if interval is None :
-            interval = self.interval
+            interval = alarm.interval
         if self.full() :
-            for statistic in self.statistics :
+            for statistic in alarm.statistics :
                 methods = [ getattr(self, s) for s in statistic['methods'] ]
                 values = [ method(interval) for method in methods ]
                 if [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] :
-                    return self.action.run( elb_group(self.elbname) )
+                    return alarm.action.run( elb_group(self.elbname) )
 
     def two_sigma ( self , interval ) :
       mean , sd = self.mean(interval)
