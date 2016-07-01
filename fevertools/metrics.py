@@ -331,6 +331,9 @@ class autoscale_action :
         except boto.exception.BotoServerError , ex :
             os.sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
 
+    def __str__ ( self ) :
+        return "AWS autoscale action (policy %s)" % self.policy
+
 class http_action :
 
     def __init__ ( self , url ) :
@@ -344,6 +347,9 @@ class http_action :
                 sys.stdout.write( "WARNING : %s returned '%s'\n" % ( url , res.getcode() ) )
         except urllib2.URLError , ex :
             sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( url , ex.reason ) )
+
+    def __str__ ( self ) :
+        return "GET action (%s)" % self.url
 
 class post_action :
 
@@ -366,4 +372,7 @@ class post_action :
                 sys.stdout.write( "WARNING : %s returned '%s'\n" % ( res.geturl() , res.getcode() ) )
         except urllib2.URLError , ex :
             sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( res.geturl() , ex.reason ) )
+
+    def __str__ ( self ) :
+        return "POST action (%s)" % self.url
 
