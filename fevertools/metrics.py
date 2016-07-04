@@ -348,6 +348,7 @@ class autoscale_action ( action ) :
     def run ( self , groupname ) :
         if self.cooldown() :
             os.sys.stdout.write( "Action %s in progress\n" % self.name )
+            return
         autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
         try :
             autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
@@ -367,6 +368,7 @@ class http_action ( action ) :
     def run ( self , groupname ) :
         if self.cooldown() :
             os.sys.stdout.write( "Action %s in progress\n" % self.name )
+            return
         url = self.url.format( groupname=groupname , production=fever_config()['production'] )
         try :
             res = urllib2.urlopen(url)
@@ -396,6 +398,7 @@ class post_action ( action ) :
     def run ( self , groupname ) :
         if self.cooldown() :
             os.sys.stdout.write( "Action %s in progress\n" % self.name )
+            return
         data = self.payload % ( uuid.uuid1() , datetime.datetime.now() , groupname , 'low' )
         try :
             res = urllib2.urlopen(self.url, data)
