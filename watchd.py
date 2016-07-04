@@ -31,7 +31,7 @@ if __name__ == '__main__' :
 
   metrics = []
   for name in config :
-      metrics.append( aggregated_elb(config[name]) )
+      metrics.append( aggregated_elb(name, config) )
 
   while True :
 

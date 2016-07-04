@@ -102,7 +102,9 @@ class alarm :
 
 class aggregated_metric ( dict ) :
 
-    def __init__ ( self , config , window=5 , length=10 ) :
+    def __init__ ( self , name , conf , window=5 , length=10 ) :
+        config = conf[name]
+        self.name = name
         self.metric_list = config['metric_list']
         self.tstamp = None
         self.logfile = config.get('logfile', False)
@@ -261,11 +263,11 @@ class weighted_metric ( aggregated_metric ) :
 
 class aggregated_elb ( aggregated_metric ) :
 
-    def __init__ ( self , config , window=5 , length=10 ) :
+    def __init__ ( self , name , conf , window=5 , length=10 ) :
         self.count = None
         self.healthy = None
-        self.elbname = config['elbname']
-        aggregated_metric.__init__ ( self , config , window , length )
+        self.elbname = conf[name]['elbname']
+        aggregated_metric.__init__ ( self , name , conf , window , length )
         self.date = None
 
     def input_value ( self , datastr ) :
