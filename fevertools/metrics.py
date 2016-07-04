@@ -98,7 +98,7 @@ class alarm :
             metric.length = interval + 5
         self.interval = interval * 60
         self.statistics = params['statistics']
-        self.action = get_action( params['action'] , self.name )
+        self.action = get_action( params['action'] , metric.name , self.name )
 
 class aggregated_metric ( dict ) :
 
@@ -348,20 +348,24 @@ def cooldown ( alarm , period , msg=None ) :
     with open( lockfile , 'w' ) as fd :
         fd.write( msg )
 
-def get_action ( action , alarm_name ) :
+def get_action ( action , metric_name , alarm_name ) :
     action , param = action.split(':',1)
     if action == 'autoscale' :
-        return autoscale_action( param )
+        return autoscale_action( metric_name , alarm_name , param )
     elif action == 'http' :
-        return http_action( param )
+        return http_action( metric_name , alarm_name , param )
     elif action == 'post' :
-        return post_action( param , alarm_name )
+        return post_action( metric_name , alarm_name , param )
     raise Exception( "ERROR: action '%s' unknown" % action )
 
 class action :
 
-    name = 'action'
     period = 10 * 60
+
+    def __init__ ( self , metric_name , alarm_name ) :
+        self.name = "%s-%s" % ( metric_name , alarm_name )
+        self.metric = metric_name
+        self.alarm = alarm_name
 
     def cooldown( self ) :
         return cooldown( self.name , self.period )
@@ -370,7 +374,8 @@ class autoscale_action ( action ) :
 
     name = 'autoscale'
 
-    def __init__ ( self , policy ) :
+    def __init__ ( self , metric_name , alarm_name , policy ) :
+        action.__init__( self , metric_name , alarm_name )
         self.policy = policy
 
     def run ( self , groupname ) :
@@ -390,7 +395,8 @@ class http_action ( action ) :
 
     name = 'http'
 
-    def __init__ ( self , url ) :
+    def __init__ ( self , metric_name , alarm_name , url ) :
+        action.__init__( self , metric_name , alarm_name )
         self.url = "http:%s" % url
 
     def run ( self , groupname ) :
@@ -420,8 +426,8 @@ class post_action ( action ) :
   "alarm" : "%s"
 }"""
 
-    def __init__ ( self , url , name ) :
-        self.alarm = name
+    def __init__ ( self , metric_name , alarm_name , url ) :
+        action.__init__( self , metric_name , alarm_name )
         self.url = "http://%s/" % url
 
     def run ( self , groupname ) :
