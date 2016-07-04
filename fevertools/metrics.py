@@ -89,6 +89,17 @@ def sign ( value ) :
     floatsign = math.copysign(1, value)
     return int(floatsign)
 
+class alarm :
+
+    def __init__ ( self , params , metric ) :
+        self.name = params['alarm']
+        interval = params.get('interval', metric.window)
+        if interval > metric.length :
+            metric.length = interval + 5
+        self.interval = interval * 60
+        self.statistics = params['statistics']
+        self.action = get_action( params['action'] , self.name )
+
 class aggregated_metric ( dict ) :
 
     def __init__ ( self , config , window=5 , length=10 ) :
@@ -97,12 +108,9 @@ class aggregated_metric ( dict ) :
         self.logfile = config.get('logfile', False)
         self.window = window
         self.length = length
-        if config.has_key('interval') :
-            self.interval = config['interval'] * 60
-        else :
-            self.interval = 60 * window
-        self.statistics = config['statistics']
-        self.action = get_action( config['action'] )
+        self.alarms = []
+        for params in config['alarms'] :
+            self.alarms.append( alarm(params, self) )
         dict.__init__( self )
 
     def unshift ( self ) :
@@ -122,8 +130,8 @@ class aggregated_metric ( dict ) :
         if len(self) > self.length :
             self.unshift()
 
-    def full ( self ) :
-        return len(self) > self.window
+    def full ( self , alarm ) :
+        return len(self) > alarm.interval/60
 
     def last ( self , interval ) :
         if not interval :
@@ -134,14 +142,16 @@ class aggregated_metric ( dict ) :
         return [ i for k in self.keys() for i in self[k] if k > tstamp ]
 
     def check_thresholds ( self , interval=None ) :
+      for alarm in self.alarms :
         if interval is None :
-            interval = self.interval
-        if self.full() :
-            for statistic in self.statistics :
+            interval = alarm.interval
+        if self.full(alarm) :
+            for statistic in alarm.statistics :
                 methods = [ getattr(self, s) for s in statistic['methods'] ]
                 values = [ method(interval) for method in methods ]
                 if [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] :
-                    return self.action.run( elb_group(self.elbname) )
+                    alarm.action.run( elb_group(self.elbname) )
+                    break
 
     def average ( self , interval ) :
       return self.mean(interval)[0]
@@ -325,14 +335,14 @@ class aggregated_elb ( aggregated_metric ) :
     def __str__ ( self ) :
         return "elb: %s/%s , %s" % ( self.healthy , self.count , aggregated_metric.__str__(self) )
 
-def get_action ( action ) :
+def get_action ( action , alarm_name ) :
     action , param = action.split(':',1)
     if action == 'autoscale' :
         return autoscale_action( param )
     elif action == 'http' :
         return http_action( param )
     elif action == 'post' :
-        return post_action( param )
+        return post_action( param , alarm_name )
     raise Exception( "ERROR: action '%s' unknown" % action )
 
 class autoscale_action :
@@ -377,11 +387,12 @@ class post_action :
   "alarm" : "%s"
 }"""
 
-    def __init__ ( self , url ) :
+    def __init__ ( self , url , name ) :
+        self.alarm = name
         self.url = "http://%s/" % url
 
     def run ( self , groupname ) :
-        data = self.payload % ( uuid.uuid1() , datetime.datetime.now() , groupname , 'low' )
+        data = self.payload % ( uuid.uuid1() , datetime.datetime.now() , groupname , self.alarm )
         try :
             res = urllib2.urlopen(self.url, data)
             if res.getcode() not in ( 200 , 202 ) :

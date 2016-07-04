@@ -5,26 +5,37 @@ backend:
     - cpu-0/cpu-idle
     - cpu-1/cpu-idle
   elbname: front-balancer
-  statistics:
-    - threshold: 80
-      methods:
-        - two_sigma
-        - one_tenth
-    - threshold: 90
-      methods:
-        - five_mins
-  action: autoscale:ScaleOneUp
+  alarms:
+    - alarm: high
+      statistics:
+        - threshold: 80
+          methods:
+            - two_sigma
+            - one_tenth
+        - threshold: 90
+          methods:
+            - five_mins
+      action: autoscale:ScaleOneUp
 
 recommender:
   logfile: true
   metric_list:
     - cpu-0/cpu-idle
   elbname: recommender
-  interval: 5
-  statistics:
-    - threshold: 80
-      methods:
-        - two_sigma
-        - one_tenth
-  action: autoscale:ScaleOneUp
+  alarms:
+    - alarm: high
+      interval: 5
+      statistics:
+        - threshold: 80
+          methods:
+            - two_sigma
+            - one_tenth
+      action: autoscale:ScaleOneUp
+    - alarm: low
+      interval: 25
+      statistics:
+        - threshold: -30
+          methods:
+            - two_sigma
+      action: post:10.0.0.251:8000
 
