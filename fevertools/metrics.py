@@ -315,9 +315,10 @@ def cooldown ( alarm , period , msg=None ) :
         stat = os.stat( lockfile )
         if time.time() - stat.st_mtime < period :
             return True
-    if msg :
-        with open( lockfile , 'w' ) as fd :
-            fd.write( msg )
+    if not msg :
+        msg = "%d cooldown activated" % time.time()
+    with open( lockfile , 'w' ) as fd :
+        fd.write( msg )
 
 def get_action ( action ) :
     action , param = action.split(':',1)
