@@ -143,6 +143,12 @@ class aggregated_metric ( dict ) :
                 if [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] :
                     return self.action.run( elb_group(self.elbname) )
 
+    def average ( self , interval ) :
+      return self.mean(interval)[0]
+
+    def sigma ( self , interval ) :
+      return self.mean(interval)[1]
+
     def two_sigma ( self , interval ) :
       mean , sd = self.mean(interval)
       return mean + 2 * sd
@@ -285,6 +291,16 @@ class aggregated_elb ( aggregated_metric ) :
     def __setitem__ ( self , key , valstr ) :
         if self.date != key :
             aggregated_metric.__setitem__( self , key , valstr )
+
+    def average ( self , interval ) :
+        if not self.healthy :
+            return float('nan')
+        return aggregated_metric.average( self , interval ) / self.healthy
+
+    def sigma ( self , interval ) :
+        if not self.healthy :
+            return float('nan')
+        return aggregated_metric.sigma( self , interval ) / self.healthy
 
     def two_sigma ( self , interval ) :
         if not self.healthy :
