@@ -96,9 +96,13 @@ class alarm :
         interval = params.get('interval', metric.window)
         if max( interval , metric.length ) == interval :
             metric.length = interval + 5
+        cooldown = params.get('cooldown', metric.window)
+        if max( interval , cooldown ) == interval :
+            cooldown = interval
         self.interval = interval * 60
+        self.cooldown = cooldown * 60
         self.statistics = params['statistics']
-        self.action = get_action( params['action'] , metric.name , self.name )
+        self.action = get_action( params['action'] , metric.name , self )
 
 class aggregated_metric ( dict ) :
 
@@ -348,24 +352,23 @@ def cooldown ( alarm , period , msg=None ) :
     with open( lockfile , 'w' ) as fd :
         fd.write( msg )
 
-def get_action ( action , metric_name , alarm_name ) :
+def get_action ( action , metric_name , alarm ) :
     action , param = action.split(':',1)
     if action == 'autoscale' :
-        return autoscale_action( metric_name , alarm_name , param )
+        return autoscale_action( metric_name , alarm , param )
     elif action == 'http' :
-        return http_action( metric_name , alarm_name , param )
+        return http_action( metric_name , alarm , param )
     elif action == 'post' :
-        return post_action( metric_name , alarm_name , param )
+        return post_action( metric_name , alarm , param )
     raise Exception( "ERROR: action '%s' unknown" % action )
 
 class action :
 
-    period = 10 * 60
-
-    def __init__ ( self , metric_name , alarm_name ) :
-        self.name = "%s-%s" % ( metric_name , alarm_name )
+    def __init__ ( self , metric_name , alarm ) :
+        self.name = "%s-%s" % ( metric_name , alarm.name )
+        self.period = alarm.cooldown
         self.metric = metric_name
-        self.alarm = alarm_name
+        self.alarm = alarm.name
 
     def cooldown( self ) :
         return cooldown( self.name , self.period )

@@ -33,6 +33,7 @@ recommender:
       action: autoscale:ScaleOneUp
     - alarm: low
       interval: 25
+      cooldown: 30
       statistics:
         - threshold: -30
           methods:
