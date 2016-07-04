@@ -329,12 +329,24 @@ def get_action ( action ) :
         return post_action( param )
     raise Exception( "ERROR: action '%s' unknown" % action )
 
-class autoscale_action :
+class action :
+
+    name = 'action'
+    period = 10 * 60
+
+    def cooldown( self ) :
+        return cooldown( self.name , self.period )
+
+class autoscale_action ( action ) :
+
+    name = 'autoscale'
 
     def __init__ ( self , policy ) :
         self.policy = policy
 
     def run ( self , groupname ) :
+        if self.cooldown() :
+            os.sys.stdout.write( "Action %s in progress\n" % self.name )
         autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
         try :
             autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
@@ -344,12 +356,16 @@ class autoscale_action :
     def __str__ ( self ) :
         return "AWS autoscale action (policy %s)" % self.policy
 
-class http_action :
+class http_action ( action ) :
+
+    name = 'http'
 
     def __init__ ( self , url ) :
         self.url = "http:%s" % url
 
     def run ( self , groupname ) :
+        if self.cooldown() :
+            os.sys.stdout.write( "Action %s in progress\n" % self.name )
         url = self.url.format( groupname=groupname , production=fever_config()['production'] )
         try :
             res = urllib2.urlopen(url)
@@ -361,7 +377,9 @@ class http_action :
     def __str__ ( self ) :
         return "GET action (%s)" % self.url
 
-class post_action :
+class post_action ( action ) :
+
+    name = 'post'
 
     payload = """{
   "Type" : "watchd",
@@ -375,6 +393,8 @@ class post_action :
         self.url = "http://%s/" % url
 
     def run ( self , groupname ) :
+        if self.cooldown() :
+            os.sys.stdout.write( "Action %s in progress\n" % self.name )
         data = self.payload % ( uuid.uuid1() , datetime.datetime.now() , groupname , 'low' )
         try :
             res = urllib2.urlopen(self.url, data)
