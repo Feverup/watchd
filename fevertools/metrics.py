@@ -94,7 +94,7 @@ class alarm :
     def __init__ ( self , params , metric ) :
         self.name = params['alarm']
         interval = params.get('interval', metric.window)
-        if interval > metric.length :
+        if max( interval , metric.length ) == interval :
             metric.length = interval + 5
         self.interval = interval * 60
         self.statistics = params['statistics']
