@@ -213,8 +213,7 @@ class aggregated_metric ( dict ) :
         return fit[0]
 
     def dump ( self , interval ) :
-        output  = "%7.2f %5.2f" % self.mean(interval)
-        output += "%7.2f %7.2f" % ( self.one_tenth(interval) , self.five_mins(interval) )
+        output  = "%7.2f %5.2f %7.2f %7.2f" % ( self.average(interval) , self.sigma(interval) , self.one_tenth(interval) , self.five_mins(interval) )
         output += " :: " +  " , ".join( [ "%7.2f" % v for v in self.last(interval) ] )
         return output
 
