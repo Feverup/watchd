@@ -424,6 +424,7 @@ class post_action ( action ) :
   "Type" : "watchd",
   "id":"%s",
   "tstamp":"%s",
+  "validated" : true,
   "metric" : "%s",
   "alarm" : "%s"
 }"""
