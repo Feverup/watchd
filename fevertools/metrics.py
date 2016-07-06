@@ -136,8 +136,8 @@ class aggregated_metric ( dict ) :
         if len(self) > self.length :
             self.unshift()
 
-    def full ( self , alarm ) :
-        return len(self) > alarm.interval/60
+    def full ( self , alarm , interval ) :
+        return len(self) > alarm.interval/60 and len(self.last(interval)) > 0
 
     def last ( self , interval ) :
         if not interval :
@@ -151,7 +151,7 @@ class aggregated_metric ( dict ) :
       for alarm in self.alarms :
         if interval is None :
             interval = alarm.interval
-        if self.full(alarm) :
+        if self.full(alarm, interval) :
             for statistic in alarm.statistics :
                 methods = [ getattr(self, s) for s in statistic['methods'] ]
                 values = [ method(interval) for method in methods ]
