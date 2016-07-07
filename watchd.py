@@ -39,8 +39,14 @@ if __name__ == '__main__' :
     sock = socket.socket( socket.AF_UNIX )
     sock.connect( unixsock )
 
-    metric.update( sock )
-    metric.check_thresholds()
+    try :
+      metric.update( sock )
+      metric.check_thresholds()
+    except Exception , ex :
+      os.sys.stdout.write( "Exception happened at %s\n%s\n" %( datetime.datetime.now() , ex ) )
+      traceback.print_exc()
+      os.sys.stdout.write( "\n" )
+      os.sys.stdout.flush()
 
    with open('/var/lib/nagios3/rw/nagios.cmd', 'a+') as fd :
         fd.write( "[%d] PROCESS_SERVICE_CHECK_RESULT;admin11;watchd;0;watchd OK - service running\n" % time.time() )
