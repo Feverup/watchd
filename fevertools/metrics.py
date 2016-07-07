@@ -286,7 +286,7 @@ class aggregated_elb ( aggregated_metric ) :
                 if data :
                     self[date] = data.split('=')[1]
 
-        if self.date != date and len(self.last(60*self.window)) and self.logfile :
+        if self.check_date(date) and len(self.last(60*self.window)) and self.logfile :
             with open( '%s.out' % self.elbname , 'a+' ) as fd :
                 fd.write( "%s %14.2f %s\n" % ( datetime.datetime.now() , date , self.dump(60*self.window) ) )
 
@@ -304,8 +304,11 @@ class aggregated_elb ( aggregated_metric ) :
         return [ str(i.private_dns_name.split('.')[0]) for i in instances ]
 
     def __setitem__ ( self , key , valstr ) :
-        if self.date != key :
+        if self.check_date( key ) :
             aggregated_metric.__setitem__( self , key , valstr )
+
+    def check_date ( self , date ) :
+        return date - self.date > 70
 
     def average ( self , interval ) :
         if not self.healthy :
