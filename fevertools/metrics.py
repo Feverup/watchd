@@ -443,7 +443,7 @@ class post_action ( action ) :
             if res.getcode() not in ( 200 , 202 ) :
                 os.sys.stdout.write( "WARNING : %s returned '%s'\n" % ( res.geturl() , res.getcode() ) )
         except urllib2.URLError , ex :
-            os.sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( res.geturl() , ex.reason ) )
+            os.sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( self.url , ex.reason ) )
 
     def __str__ ( self ) :
         return "POST action (%s)" % self.url
