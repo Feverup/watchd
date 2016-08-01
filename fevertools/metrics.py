@@ -178,6 +178,8 @@ class aggregated_metric ( dict ) :
 
     def mean ( self , interval ) :
         data = self.last(interval)
+        if not data :
+            return float('nan') , float('nan')
         n = len(data)
         mean = sum(data) / n
         data2 = [ v*v for v in data ]
@@ -186,6 +188,8 @@ class aggregated_metric ( dict ) :
 
     def quantile ( self , prob , interval ) :
         data = self.last(interval)
+        if not data :
+            return float('nan')
         n = len(data)
         # As indexes start at 0, we use floor instead of ceil for percentile index
         limit = int(math.floor( n * prob ))
@@ -258,6 +262,8 @@ class weighted_metric ( aggregated_metric ) :
 
     def mean ( self , interval ) :
         data = self.last(interval)
+        if not data :
+            return float('nan') , float('nan')
         n = sum( [ v.weight for v in data ] )
         mean = sum( [ v.scaled() for v in data ] ) / n
         data2 = [ v.scaled2() for v in data ]
