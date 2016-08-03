@@ -7,6 +7,7 @@ import urllib, urllib2
 import uuid
 
 import math
+import threading
 import datetime
 import time
 import os
@@ -373,7 +374,8 @@ class action :
         self.alarm = alarm.name
 
     def run ( self , groupname , debug ) :
-        self.execute( groupname , debug )
+        self.thread = threading.Thread(target=self.execute, args=( groupname , debug ) )
+        self.thread.start()
 
     def cooldown( self ) :
         return cooldown( self.name , self.period )
