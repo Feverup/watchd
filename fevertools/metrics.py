@@ -372,6 +372,9 @@ class action :
         self.metric = metric_name
         self.alarm = alarm.name
 
+    def run ( self , groupname , debug ) :
+        self.execute( groupname , debug )
+
     def cooldown( self ) :
         return cooldown( self.name , self.period )
 
@@ -383,7 +386,7 @@ class autoscale_action ( action ) :
         action.__init__( self , metric_name , alarm_name )
         self.policy = policy
 
-    def run ( self , groupname ) :
+    def execute ( self , groupname ) :
         if self.cooldown() :
             return
         autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
@@ -403,7 +406,7 @@ class http_action ( action ) :
         action.__init__( self , metric_name , alarm_name )
         self.url = "http:%s" % url
 
-    def run ( self , groupname ) :
+    def execute ( self , groupname ) :
         if self.cooldown() :
             return
         url = self.url.format( groupname=groupname , production=fever_config()['production'] )
@@ -434,7 +437,7 @@ class post_action ( action ) :
         action.__init__( self , metric_name , alarm_name )
         self.url = "http://%s/" % url
 
-    def run ( self , groupname ) :
+    def execute ( self , groupname ) :
         if self.cooldown() :
             return
         data = self.payload % ( uuid.uuid1() , datetime.datetime.now() , groupname , self.alarm )
