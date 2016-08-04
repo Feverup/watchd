@@ -379,9 +379,9 @@ class action :
         self.metric = metric_name
         self.alarm = alarm.name
 
-    def run ( self , groupname , debug ) :
+    def run ( self , groupname ) :
         if not self.cooldown() :
-            self.thread = threading.Thread(target=self.execute, args=( groupname , debug ) )
+            self.thread = threading.Thread(target=self.execute, args=( groupname ,) )
             self.thread.start()
 
     def cooldown( self ) :
