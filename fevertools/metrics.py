@@ -380,8 +380,9 @@ class action :
         self.alarm = alarm.name
 
     def run ( self , groupname , debug ) :
-        self.thread = threading.Thread(target=self.execute, args=( groupname , debug ) )
-        self.thread.start()
+        if not self.cooldown() :
+            self.thread = threading.Thread(target=self.execute, args=( groupname , debug ) )
+            self.thread.start()
 
     def cooldown( self ) :
         return cooldown( self.name , self.period )
@@ -395,8 +396,6 @@ class autoscale_action ( action ) :
         self.policy = policy
 
     def execute ( self , groupname ) :
-        if self.cooldown() :
-            return
         autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
         try :
             autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
@@ -415,8 +414,6 @@ class http_action ( action ) :
         self.url = "http:%s" % url
 
     def execute ( self , groupname ) :
-        if self.cooldown() :
-            return
         url = self.url.format( groupname=groupname , production=fever_config()['production'] )
         try :
             res = urllib2.urlopen(url)
@@ -446,8 +443,6 @@ class post_action ( action ) :
         self.url = "http://%s/" % url
 
     def execute ( self , groupname ) :
-        if self.cooldown() :
-            return
         data = self.payload % ( uuid.uuid1() , datetime.datetime.now() , groupname , self.alarm )
         try :
             res = urllib2.urlopen(self.url, data)
