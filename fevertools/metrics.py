@@ -110,6 +110,7 @@ class aggregated_metric ( dict ) :
     def __init__ ( self , name , conf , window=5 , length=10 ) :
         config = conf[name]
         self.name = name
+        self.alias = config.get('alias', name)
         self.metric_list = config['metric_list']
         self.tstamp = None
         self.logfile = config.get('logfile', False)

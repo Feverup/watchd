@@ -1,6 +1,7 @@
 ---
 
 backend:
+  alias: load
   metric_list:
     - cpu-0/cpu-idle
     - cpu-1/cpu-idle
@@ -18,6 +19,7 @@ backend:
       action: autoscale:ScaleOneUp
 
 recommender:
+  alias: load
   logfile: true
   metric_list:
     - cpu-0/cpu-idle
