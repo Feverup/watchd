@@ -37,6 +37,6 @@ recommender:
       statistics:
         - threshold: -30
           methods:
-            - two_sigma
+            - sigma_down
       action: post:10.0.0.251:8000
 

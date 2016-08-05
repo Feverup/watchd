@@ -170,6 +170,10 @@ class aggregated_metric ( dict ) :
       mean , sd = self.mean(interval)
       return mean + 2 * sd
 
+    def sigma_down ( self , interval ) :
+      mean , sd = self.mean(interval)
+      return mean - 2 * sd
+
     def one_tenth ( self , interval ) :
       return self.quantile(0.9, interval)
 
@@ -331,6 +335,11 @@ class aggregated_elb ( aggregated_metric ) :
         if not self.healthy :
             return float('nan')
         return aggregated_metric.two_sigma( self , interval ) / self.healthy
+
+    def sigma_down ( self , interval ) :
+        if not self.healthy :
+            return float('nan')
+        return aggregated_metric.sigma_down( self , interval ) / self.healthy
 
     def one_tenth ( self , interval ) :
         if not self.healthy :
