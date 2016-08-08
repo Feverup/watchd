@@ -285,6 +285,7 @@ class aggregated_elb ( aggregated_metric ) :
         for alarm in self.alarms :
             tagname = "%s-%s" % ( alarm.name , self.alias )
             if elbinstance.get_tags().has_key(tagname) :
+                print "WARNING : thresholds for %s %s defined on ELB tags as %s, values from configuration file will be ignored" % ( self.name , alarm.name , elbinstance.get_tags()[tagname] )
                 for statistic in alarm.statistics :
                     statistic['threshold'] = elbinstance.get_tags()[tagname]
 
