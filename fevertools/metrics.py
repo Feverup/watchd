@@ -287,7 +287,7 @@ class aggregated_elb ( aggregated_metric ) :
             if elbinstance.get_tags().has_key(tagname) :
                 print "WARNING : thresholds for %s %s defined on ELB tags as %s, values from configuration file will be ignored" % ( self.name , alarm.name , elbinstance.get_tags()[tagname] )
                 for statistic in alarm.statistics :
-                    statistic['threshold'] = sign(statistic['threshold']) * float(elbinstance.get_tags()[tagname]
+                    statistic['threshold'] = sign(statistic['threshold']) * float(elbinstance.get_tags()[tagname])
 
     def input_value ( self , datastr ) :
         if not self.healthy :
