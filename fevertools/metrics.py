@@ -280,6 +280,13 @@ class aggregated_elb ( aggregated_metric ) :
         self.elbname = conf[name]['elbname']
         aggregated_metric.__init__ ( self , name , conf , window , length )
         self.date = None
+        elbinstance = boto.ec2.elb.connect_to_region("eu-west-1") \
+                                .get_all_load_balancers([self.elbname])[0]
+        for alarm in self.alarms :
+            tagname = "%s-%s" % ( alarm.name , self.alias )
+            if elbinstance.get_tags().has_key(tagname) :
+                for statistic in alarm.statistics :
+                    statistic['threshold'] = elbinstance.get_tags()[tagname]
 
     def input_value ( self , datastr ) :
         if not self.healthy :
