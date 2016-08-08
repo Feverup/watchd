@@ -110,6 +110,7 @@ class aggregated_metric ( dict ) :
     def __init__ ( self , name , conf , window=5 , length=10 ) :
         config = conf[name]
         self.name = name
+        self.alias = config.get('alias', name)
         self.metric_list = config['metric_list']
         self.tstamp = None
         self.logfile = config.get('logfile', False)
@@ -283,6 +284,14 @@ class aggregated_elb ( aggregated_metric ) :
         self.elbname = conf[name]['elbname']
         aggregated_metric.__init__ ( self , name , conf , window , length )
         self.date = None
+        elbinstance = boto.ec2.elb.connect_to_region("eu-west-1") \
+                                .get_all_load_balancers([self.elbname])[0]
+        for alarm in self.alarms :
+            tagname = "%s-%s" % ( alarm.name , self.alias )
+            if elbinstance.get_tags().has_key(tagname) :
+                print "WARNING : thresholds for %s %s defined on ELB tags as %s, values from configuration file will be ignored" % ( self.name , alarm.name , elbinstance.get_tags()[tagname] )
+                for statistic in alarm.statistics :
+                    statistic['threshold'] = sign(statistic['threshold']) * float(elbinstance.get_tags()[tagname])
 
     def input_value ( self , datastr ) :
         if not self.healthy :
