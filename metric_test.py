@@ -11,8 +11,8 @@ stream4 = "1465835416 8.374998e+01 8.623329e+01 8.074983e+01 8.426661e+01 7.8383
 class test_metric ( fevertools.metrics.aggregated_metric ) :
 
     @classmethod
-    def from_datastream ( cls , config , *streams ) :
-        obj = cls(config)
+    def from_datastream ( cls , name , config , *streams ) :
+        obj = cls(name, config)
         for stream in streams :
             tstamp , values = stream.split(None,1)
             tstamp = int(tstamp)
@@ -27,8 +27,8 @@ wstream2 = "1466008466 2 28.0 32.0"
 class test_weighted ( fevertools.metrics.weighted_metric ) :
 
     @classmethod
-    def from_datastream ( cls , config , *streams ) :
-        obj = cls(config)
+    def from_datastream ( cls , name , config , *streams ) :
+        obj = cls(name, config)
         for stream in streams :
             tstamp , healthy , values = stream.split(None,2)
             tstamp = int(tstamp)
@@ -41,9 +41,11 @@ class test_weighted ( fevertools.metrics.weighted_metric ) :
 tol = 1e-4
 
 if __name__ == "__main__" :
-    config = { 'metric_list':'' , 'statistics':'' , 'action':'autoscale:' , 'elbname':'' }
+    config = { 'standard_test': { 'metric_list':'' , 'elbname':'' , 'alarms': [ { 'alarm':'test' ,  'statistics':'' , 'action':'autoscale:' } ] },
+               'weight_test':   { 'metric_list':'' , 'elbname':'' , 'alarms': [ { 'alarm':'test' , 'statistics':'' , 'action':'autoscale:' } ] }
+               }
 
-    metric = test_metric.from_datastream ( config , stream1 , stream2 , stream3 , stream4 )
+    metric = test_metric.from_datastream ( 'standard_test' , config , stream1 , stream2 , stream3 , stream4 )
     t_predict = 1465835837 + 300
     if len(sys.argv) > 1 :
         print 'y <- matrix(nrow=0, ncol=2)'
@@ -59,9 +61,13 @@ if __name__ == "__main__" :
     predict = metric.predict( t_predict , False )
     if abs( predict - 76.77483 ) > tol :
         print "Wrong prediction : %s vs. 76.77483" % predict
+    else :
+        print "Acceptable prediction : %s vs. 76.77483" % predict
 
-    metric = test_weighted.from_datastream ( config , wstream1 , wstream2 )
+    metric = test_weighted.from_datastream ( 'weight_test' , config , wstream1 , wstream2 )
     mean , sd = metric.mean(-1)
     if abs( mean - 18.2 ) > tol or abs( sd - 6.11228 ) > tol :
         print "Wrong weighted average : %s / %s vs. 18.2 / 6.11" % metric.mean(-1)
+    else :
+        print "Acceptable weighted average : %s / %s vs. 18.2 / 6.11" % metric.mean(-1)
 
