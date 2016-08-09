@@ -360,8 +360,13 @@ class aggregated_elb ( aggregated_metric ) :
             return float('nan')
         return aggregated_metric.five_mins( self , interval ) / self.healthy
 
+    def nodes_out ( self , interval ) :
+        if not self.healthy :
+            return self.count
+        return self.count - self.healthy
+
     def dump ( self , interval ) :
-        output = "%s %s " % ( self.count-self.healthy , self.count )
+        output = "%s %s " % ( self.nodes_out(interval) , self.count )
         output += aggregated_metric.dump( self , interval )
         return output
 

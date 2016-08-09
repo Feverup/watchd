@@ -17,6 +17,12 @@ backend:
           methods:
             - five_mins
       action: autoscale:ScaleOneUp
+    - alarm: out
+      statistics:
+        - threshold: 1
+          methods:
+            - nodes_out
+      action: autoscale:ScaleOneUp
 
 recommender:
   alias: load
