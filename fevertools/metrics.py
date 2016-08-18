@@ -182,6 +182,12 @@ class aggregated_metric ( dict ) :
     def five_mins ( self , interval ) :
       return self.predict(5*60)
 
+    def minmax ( self , interval ) :
+        data = self.last(interval)
+        if not data :
+            return float('nan') , float('nan')
+        return min(data), max(data)
+
     def mean ( self , interval ) :
         data = self.last(interval)
         if not data :
@@ -298,8 +304,20 @@ class aggregated_elb ( aggregated_metric ) :
             return aggregated_metric.input_value( self , 'nan' )
         return ( 100 - aggregated_metric.input_value( self , datastr ) ) * self.healthy
 
+    def extreme_clean ( self ) :
+        v_min , v_max = self.minmax(-1)
+        for k in sorted(self.keys()) :
+            if self[k].count(v_min) :
+                self[k].pop(self[k].index(v_min))
+                break
+        for k in sorted(self.keys(), reverse=True) :
+            if self[k].count(v_max) :
+                self[k].pop(self[k].index(v_max))
+                return
+
     def update ( self , sock ) :
         date = time.time()
+        self.extreme_clean()
         for hostname in self.hostnames(date) :
             for metric in self.metric_list :
                 data = recv(sock, "%s/%s" % (hostname,metric))
