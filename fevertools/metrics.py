@@ -12,8 +12,8 @@ import datetime
 import time
 import os
 
-def recv( sock , metric , command='GETVAL' , buffsize=1024 ) :
-    sock.send("%s %s\n" % (command,metric))
+def collectd( sock , payload , command='GETVAL' , buffsize=1024 ) :
+    sock.send("%s %s\n" % (command,payload))
     data = sock.recv(buffsize)
     while data.find(' ') < 0 :
         data += sock.recv(buffsize)
@@ -31,7 +31,7 @@ def recv( sock , metric , command='GETVAL' , buffsize=1024 ) :
     response_size , status_line = items.pop(0).split(None, 1)
     if size == 2 :
         if response_size == '-1' :
-            os.sys.stderr.write( "ERROR : %s , %s %s gave %s\n" % ( datetime.datetime.now() , command , metric , status_line ) )
+            os.sys.stderr.write( "ERROR : %s , '%s %s' gave %s\n" % ( datetime.datetime.now() , command , payload , status_line ) )
         return
     elif size == 3 :
         return items[0]
@@ -320,11 +320,12 @@ class aggregated_elb ( aggregated_metric ) :
         self.extreme_clean()
         for hostname in self.hostnames(date) :
             for metric in self.metric_list :
-                data = recv(sock, "%s/%s" % (hostname,metric))
+                data = collectd(sock, "%s/%s" % (hostname,metric))
                 if data :
                     self[date] = data.split('=')[1]
 
         if len(self.last(60*self.window)) and self.logfile :
+            self.submit(socket, 60*self.window)
             with open( '%s.out' % self.elbname , 'a+' ) as fd :
                 fd.write( "%s %14.2f %s\n" % ( datetime.datetime.now() , date , self.dump(60*self.window) ) )
 
@@ -382,6 +383,12 @@ class aggregated_elb ( aggregated_metric ) :
         if not self.healthy :
             return self.count
         return self.count - self.healthy
+
+    def submit ( self , sock, interval ) :
+        output  = '"%s/%s/%s" ' % ( self.elbname , self.alias , self.__class__ )
+        output += "%d:%7.2f:%5.2f:%7.2f:%7.2f" % ( self.tstamp , self.average(interval) , self.sigma(interval) , self.one_tenth(interval) , self.five_mins(interval) )
+        output += ":%s:%s" % ( self.nodes_out(interval) , self.count )
+        collectd(sock, output, command='PUTVAL')
 
     def dump ( self , interval ) :
         output = "%s %s " % ( self.nodes_out(interval) , self.count )
