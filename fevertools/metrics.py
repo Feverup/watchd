@@ -385,8 +385,8 @@ class aggregated_elb ( aggregated_metric ) :
         return self.count - self.healthy
 
     def submit ( self , sock, interval ) :
-        output  = '"%s/%s/%s" ' % ( self.elbname , self.alias , self.__class__ )
-        output += "%d:%7.2f:%5.2f:%7.2f:%7.2f" % ( self.tstamp , self.average(interval) , self.sigma(interval) , self.one_tenth(interval) , self.five_mins(interval) )
+        output  = '"%s/%s/%s" ' % ( self.elbname , self.alias , self.__class__.__name__ )
+        output += "%d:%f:%f:%f:%f" % ( self.tstamp , self.average(interval) , self.sigma(interval) , self.one_tenth(interval) , self.five_mins(interval) )
         output += ":%s:%s" % ( self.nodes_out(interval) , self.count )
         collectd(sock, output, command='PUTVAL')
 
