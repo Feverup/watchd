@@ -7,12 +7,38 @@ import boto.ec2.elb
 
 import yaml
 
+import threading
+
 import socket
 import time
 
 import os
 
 unixsock = '/var/run/collectd-unixsock'
+
+def server ( sock ) :
+    # https://pymotw.com/2/socket/uds.html
+
+    sock.bind(sockfile)
+    sock.listen(1)
+
+    while True :
+        connection, client_address = sock.accept()
+
+        try:
+
+            # Receive the data in small chunks and retransmit it
+            while True:
+                data = connection.recv(256)
+                if data:
+                    connection.sendall("echo: "+data)
+                else:
+                    break
+
+        finally:
+            # Clean up the connection
+            connection.close()
+
 
 if __name__ == '__main__' :
 
@@ -28,6 +54,11 @@ if __name__ == '__main__' :
   newpid = os.fork()
   if newpid :
       os.sys.exit(0)
+
+  servsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+  serverthread = threading.Thread(target=server, args=( servsock ,) )
+  serverthread.daemon = True
+  serverthread.start()
 
   config = 'watchd.yml'
   if not os.path.isfile( config ) :
