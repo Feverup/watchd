@@ -46,14 +46,21 @@ if __name__ == '__main__' :
       print "Usage: %s" % os.sys.argv[0].split('.')[-1]
       os.sys.exit(2)
 
-  sockfile = "/var/run/watchd.sock"
-  if os.path.exists(sockfile) :
-      print "watchd socket found, another watchd instance is running"
+  pidfile = "/var/run/watchd.pid"
+  if os.path.isfile(pidfile) :
+      print "PID file exists, another watchd instance is likely running"
       os.sys.exit(1)
 
   newpid = os.fork()
   if newpid :
+      with open( pidfile , 'w' ) as fd :
+          fd.write( "%d\n" % newpid )
       os.sys.exit(0)
+
+  sockfile = "/var/run/watchd.sock"
+  if os.path.exists(sockfile) :
+      print "stale watchd socket found, removing"
+      os.unlink( sockfile )
 
   servsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
   serverthread = threading.Thread(target=server, args=( servsock ,) )
