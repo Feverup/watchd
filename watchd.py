@@ -20,15 +20,13 @@ if __name__ == '__main__' :
       print "Usage: %s" % os.sys.argv[0].split('.')[-1]
       os.sys.exit(2)
 
-  pidfile = "/var/run/watchd.pid"
-  if os.path.isfile(pidfile) :
-      print "PID file exists, another watchd instance is likely running"
+  sockfile = "/var/run/watchd.sock"
+  if os.path.exists(sockfile) :
+      print "watchd socket found, another watchd instance is running"
       os.sys.exit(1)
 
   newpid = os.fork()
   if newpid :
-      with open( pidfile , 'w' ) as fd :
-          fd.write( "%d\n" % newpid )
       os.sys.exit(0)
 
   config = 'watchd.yml'
