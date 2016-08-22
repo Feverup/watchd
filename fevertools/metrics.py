@@ -243,11 +243,17 @@ def lm ( x , y ) :
 
     xy = zip(x, y)
 
-    N, X, Y = len(x), sum(x), sum(y)
+    N = len(x)
+    if N < 7 :
+        return float('nan') , float('nan')
+    X, Y = sum(x), sum(y)
     X2 = sum([v*v for v in x])
     XY = sum(map(lambda p: p[0] * p[1], xy))
 
     det = N * X2 - X * X
+    if det == 0 :
+        os.sys.stdout.write( "DEGENERATED DATA : %s , %s\n" % (x,y) )
+        return float('nan') , float('nan')
     b = (N * XY - X * Y) / det
     a = (Y - b * X) / N
 
