@@ -31,7 +31,14 @@ def server ( sock ) :
             while True:
                 data = connection.recv(256)
                 if data:
-                    connection.sendall("echo: "+data)
+                    if data[:-1] == "what" :
+                        connection.sendall("metrics %s\n"%", ".join([m.name for m in metrics]))
+                    elif data[:-1] == "kill" :
+                        connection.sendall("stopping\n")
+                        state['serving'] = False
+                        break
+                    else :
+                        connection.sendall("echo: %s\n"%data)
                 else:
                     break
 
@@ -64,6 +71,7 @@ if __name__ == '__main__' :
 
   servsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
   serverthread = threading.Thread(target=server, args=( servsock ,) )
+  serverthread.name = "SocketServer"
   serverthread.daemon = True
   serverthread.start()
 
@@ -73,11 +81,13 @@ if __name__ == '__main__' :
   with open( config ) as fd :
       config = yaml.load( fd )
 
+  state = { 'serving':True }
+
   metrics = []
   for name in config :
       metrics.append( aggregated_elb(name, config) )
 
-  while True :
+  while state['serving'] :
 
    for metric in metrics :
     sock = socket.socket( socket.AF_UNIX )
@@ -96,4 +106,7 @@ if __name__ == '__main__' :
         fd.write( "[%d] PROCESS_SERVICE_CHECK_RESULT;admin11;watchd;0;watchd OK - service running\n" % time.time() )
 
    time.sleep(60)
+
+  os.unlink( sockfile )
+  os.unlink( pidfile )
 
