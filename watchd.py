@@ -15,10 +15,19 @@ import os
 
 unixsock = '/var/run/collectd-unixsock'
 
+collectd_types = """
+aggregated_metric average:GAUGE:0:U sigma:GAUGE:0:U one_tenth:GAUGE:0:U five_mins:GAUGE:0:U
+aggregated_elb    average:GAUGE:0:U sigma:GAUGE:0:U one_tenth:GAUGE:0:U five_mins:GAUGE:0:U out:GAUGE:0:U count:GAUGE:0:U
+"""
+
 if __name__ == '__main__' :
 
+  if len(os.sys.argv) == 2 and os.sys.argv[1] == "--collectd" :
+      print collectd_types
+      os.sys.exit(0)
+
   if len(os.sys.argv) != 1 :
-      print "Usage: %s" % os.sys.argv[0].split('.')[-1]
+      print "Usage: %s [--collectd]" % os.sys.argv[0].split('.')[-1]
       os.sys.exit(2)
 
   pidfile = "/var/run/watchd.pid"

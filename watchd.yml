@@ -1,7 +1,7 @@
 ---
 
 backend:
-  alias: load
+  alias: elbload
   metric_list:
     - cpu-0/cpu-idle
     - cpu-1/cpu-idle
@@ -25,7 +25,7 @@ backend:
       action: autoscale:ScaleOneUp
 
 recommender:
-  alias: load
+  alias: elbload
   logfile: true
   metric_list:
     - cpu-0/cpu-idle
