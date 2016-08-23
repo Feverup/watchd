@@ -324,8 +324,8 @@ class aggregated_elb ( aggregated_metric ) :
                 if data :
                     self[date] = data.split('=')[1]
 
+        self.submit(socket, 60*self.window)
         if len(self.last(60*self.window)) and self.logfile :
-            self.submit(socket, 60*self.window)
             with open( '%s.out' % self.elbname , 'a+' ) as fd :
                 fd.write( "%s %14.2f %s\n" % ( datetime.datetime.now() , date , self.dump(60*self.window) ) )
 
