@@ -31,12 +31,32 @@ def server ( sock ) :
             while True:
                 data = connection.recv(256)
                 if data:
-                    if data[:-1] == "what" :
-                        connection.sendall("metrics %s\n"%", ".join([m.name for m in metrics]))
-                    elif data[:-1] == "kill" :
+                    items = data[:-1].split()
+                    if items[0] == "what" :
+                        if len(items) == 2 :
+                            for metric in metrics :
+                                if metric.elbname == items[1] :
+                                    connection.sendall("alarms %s\n" % ", ".join([a.name for a in metric.alarms]))
+                                    break
+                            else :
+                                connection.sendall("error bad metric\n")
+                        else :
+                            connection.sendall("metrics %s\n"%", ".join([m.name for m in metrics]))
+                    elif items[0] == "kill" :
                         connection.sendall("stopping\n")
                         state['serving'] = False
                         break
+                    elif items[0] == "get" and len(items) == 3 :
+                        metric = [ m for m in metrics if m.elbname == items[1] ]
+                        if len(metric) == 1 :
+                            for alarm in metric[0].alarms :
+                                if alarm.name == items[2] :
+                                    connection.sendall("alarm found\n")
+                                    break
+                            else :
+                                connection.sendall("error bad alarm\n")
+                        else :
+                            connection.sendall("error bad metric\n")
                     else :
                         connection.sendall("echo: %s\n"%data)
                 else:
