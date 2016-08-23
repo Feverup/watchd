@@ -112,7 +112,7 @@ class aggregated_metric ( dict ) :
         self.name = name
         self.alias = config.get('alias', name)
         self.metric_list = config['metric_list']
-        self.tstamp = None
+        self.tstamp = 'N'
         self.logfile = config.get('logfile', False)
         self.window = window
         self.length = length
@@ -386,7 +386,7 @@ class aggregated_elb ( aggregated_metric ) :
 
     def submit ( self , sock, interval ) :
         output  = '"%s/%s/%s" ' % ( self.elbname , self.alias , self.__class__.__name__ )
-        output += "%d:%f:%f:%f:%f" % ( self.tstamp , self.average(interval) , self.sigma(interval) , self.one_tenth(interval) , self.five_mins(interval) )
+        output += "%s:%f:%f:%f:%f" % ( self.tstamp , self.average(interval) , self.sigma(interval) , self.one_tenth(interval) , self.five_mins(interval) )
         output += ":%s:%s" % ( self.nodes_out(interval) , self.count )
         collectd(sock, output, command='PUTVAL')
 
