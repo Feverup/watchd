@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name = 'watchd',
-    version = '0.9',
+    version = '0.99',
     description = 'Alarms enabled metric monitoring service',
     license = 'Apache License (2.0)',
     url = 'https://github.com/Feverup/watchd',
@@ -12,6 +12,6 @@ setup(
     author_email = 'javier.palacios@feverup.com',
     packages = ['watchd'],
     install_requires = [ 'boto' ],
-    scripts = [ 'watchd.py' ]
+    scripts = [ 'pywatchd' ]
     )
 

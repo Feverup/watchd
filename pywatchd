@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from fevertools import aggregated_elb
+from watchd.metrics import aggregated_elb
 
 import boto.ec2
 import boto.ec2.elb
