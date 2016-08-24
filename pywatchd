@@ -61,6 +61,19 @@ def server ( sock ) :
                             connection.sendall("value %s %s\n"%(avg,std))
                         else :
                             connection.sendall("error bad metric\n")
+                    elif items[0] == "threshold" and len(items) == 3 :
+                        metric = [ m for m in metrics if m.elbname == items[1] ]
+                        if len(metric) == 1 :
+                            metric = metric[0]
+                            for alarm in metric.alarms :
+                                if alarm.name == items[2] :
+                                    threshold = max([statistic['threshold'] for statistic in alarm.statistics])
+                                    connection.sendall("threshold %s\n"%threshold)
+                                    break
+                            else :
+                                connection.sendall("error bad alarm\n")
+                        else :
+                            connection.sendall("error bad metric\n")
                     elif items[0] == "state" and len(items) == 3 :
                         metric = [ m for m in metrics if m.elbname == items[1] ]
                         if len(metric) == 1 :
