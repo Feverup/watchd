@@ -56,7 +56,7 @@ def server ( sock ) :
                         metric = [ m for m in metrics if m.elbname == items[1] ]
                         if len(metric) == 1 :
                             metric = metric[0]
-                            interval = 60 * metric.windoww
+                            interval = 60 * metric.window
                             for alarm in metric.alarms :
                                 if alarm.name == items[2] :
                                     if metric.full(alarm, interval) :
