@@ -51,7 +51,10 @@ def server ( sock ) :
                         if len(metric) == 1 :
                             for alarm in metric[0].alarms :
                                 if alarm.name == items[2] :
-                                    connection.sendall("alarm found\n")
+                                    if alarm.check_thresholds(metric[0], 5*60) :
+                                        connection.sendall("state WARNING\n")
+                                    else :
+                                        connection.sendall("state OK\n")
                                     break
                             else :
                                 connection.sendall("error bad alarm\n")
