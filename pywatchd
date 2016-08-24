@@ -55,9 +55,13 @@ def server ( sock ) :
                     elif items[0] == "get" and len(items) == 3 :
                         metric = [ m for m in metrics if m.elbname == items[1] ]
                         if len(metric) == 1 :
-                            for alarm in metric[0].alarms :
+                            metric = metric[0]
+                            interval = 60 * metric.windoww
+                            for alarm in metric.alarms :
                                 if alarm.name == items[2] :
-                                    if alarm.check_thresholds(metric[0], 5*60) :
+                                    if metric.full(alarm, interval) :
+                                        connection.sendall("state UNKNOWN\n")
+                                    elif alarm.check_thresholds(metric, interval, False) :
                                         connection.sendall("state WARNING\n")
                                     else :
                                         connection.sendall("state OK\n")
