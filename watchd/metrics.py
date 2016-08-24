@@ -105,6 +105,15 @@ class alarm :
         self.statistics = params['statistics']
         self.action = get_action( params['action'] , metric.name , self )
 
+    def check_thresholds ( self , metric , interval ) :
+        for statistic in self.statistics :
+            methods = [ getattr(metric, s) for s in statistic['methods'] ]
+            values = [ method(interval) for method in methods ]
+            if [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] :
+                self.action.run( elb_group(metric.elbname) )
+                return True
+        return False
+
 class aggregated_metric ( dict ) :
 
     def __init__ ( self , name , conf , window=5 , length=10 ) :
@@ -154,12 +163,7 @@ class aggregated_metric ( dict ) :
         if interval is None :
             interval = alarm.interval
         if self.full(alarm, interval) :
-            for statistic in alarm.statistics :
-                methods = [ getattr(self, s) for s in statistic['methods'] ]
-                values = [ method(interval) for method in methods ]
-                if [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] :
-                    alarm.action.run( elb_group(self.elbname) )
-                    break
+            alarm.check_thresholds(self, interval)
 
     def average ( self , interval ) :
       return self.mean(interval)[0]
