@@ -52,7 +52,16 @@ def server ( sock ) :
                         connection.sendall("stopping\n")
                         state['serving'] = False
                         break
-                    elif items[0] == "get" and len(items) == 3 :
+                    elif items[0] == "get" and len(items) == 2 :
+                        metric = [ m for m in metrics if m.elbname == items[1] ]
+                        if len(metric) == 1 :
+                            metric = metric[0]
+                            interval = 60 * metric.window
+                            avg , std = metric.mean(interval)
+                            connection.sendall("value %s %s\n"%(avg,std))
+                        else :
+                            connection.sendall("error bad metric\n")
+                    elif items[0] == "state" and len(items) == 3 :
                         metric = [ m for m in metrics if m.elbname == items[1] ]
                         if len(metric) == 1 :
                             metric = metric[0]
