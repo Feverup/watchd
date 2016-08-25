@@ -1,5 +1,6 @@
 
 from fevertools import elb_group, fever_config
+from watchd import alarms
 
 import boto.ec2.autoscale
 
@@ -90,30 +91,6 @@ def sign ( value ) :
     floatsign = math.copysign(1, value)
     return int(floatsign)
 
-class alarm :
-
-    def __init__ ( self , params , metric ) :
-        self.name = params['alarm']
-        interval = params.get('interval', metric.window)
-        if max( interval , metric.length ) == interval :
-            metric.length = interval + 5
-        cooldown = params.get('cooldown', metric.window)
-        if max( interval , cooldown ) == interval :
-            cooldown = interval
-        self.interval = interval * 60
-        self.cooldown = cooldown * 60
-        self.statistics = params['statistics']
-        self.action = get_action( params['action'] , metric.name , self )
-
-    def check_thresholds ( self , metric , interval ) :
-        for statistic in self.statistics :
-            methods = [ getattr(metric, s) for s in statistic['methods'] ]
-            values = [ method(interval) for method in methods ]
-            if [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] :
-                self.action.run( elb_group(metric.elbname) )
-                return True
-        return False
-
 class aggregated_metric ( dict ) :
 
     def __init__ ( self , name , conf , window=5 , length=10 ) :
@@ -127,7 +104,7 @@ class aggregated_metric ( dict ) :
         self.length = length
         self.alarms = []
         for params in config['alarms'] :
-            self.alarms.append( alarm(params, self) )
+            self.alarms.append( alarms.alarm(params, self) )
         dict.__init__( self )
 
     def unshift ( self ) :
