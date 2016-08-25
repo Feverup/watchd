@@ -12,9 +12,16 @@ import datetime
 import time
 import os
 
+def metric ( cls ) :
+    for name, method in cls.__dict__.iteritems() :
+        if hasattr(method, '__statistic__') :
+            cls.statistics.append( name )
+    return cls
+
 def statistic ( func ) :
     def wrapper ( self , interval ) :
         return func(self, interval)
+    wrapper.__statistic__ = True
     return wrapper
 
 class weighted ( float ) :
@@ -94,7 +101,10 @@ class alarm :
                 return True
         return False
 
+@metric
 class aggregated_metric ( dict ) :
+
+    statistics = []
 
     def __init__ ( self , name , conf , window=5 , length=10 ) :
         config = conf[name]
@@ -262,6 +272,7 @@ def lm ( x , y ) :
 import boto.ec2
 import boto.ec2.elb
 
+@metric
 class weighted_metric ( aggregated_metric ) :
 
     def input_value ( self , datastr ) :
@@ -279,6 +290,7 @@ class weighted_metric ( aggregated_metric ) :
         sd  = math.sqrt( sum(data2) / n - mean*mean )
         return mean , sd
 
+@metric
 class aggregated_elb ( aggregated_metric ) :
 
     def __init__ ( self , name , conf , window=5 , length=10 ) :
