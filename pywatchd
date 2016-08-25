@@ -3,9 +3,6 @@
 from watchd.metrics import aggregated_elb
 from watchd import datastore
 
-import boto.ec2
-import boto.ec2.elb
-
 import yaml
 
 import threading
