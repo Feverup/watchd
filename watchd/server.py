@@ -15,8 +15,11 @@ class socket_server ( threading.Thread ) :
 
         self.sock = socket.socket(socket.AF_UNIX)
 
-        self.sock.bind(sockfile)
-        self.sock.listen(1)
+        try :
+            self.sock.bind(sockfile)
+            self.sock.listen(1)
+        except socket.error, ex :
+            os.sys.stderr.write( "ERROR : cannot listen to socket: %s\n" % ex )
 
     def run ( self ) :
       # https://pymotw.com/2/socket/uds.html
@@ -90,6 +93,8 @@ class socket_server ( threading.Thread ) :
                 else:
                     break
 
+        except socket.error, ex :
+            os.sys.stderr.write( "ERROR : error handling incoming connectio: %s\n" % ex )
         finally:
             # Clean up the connection
             connection.close()
