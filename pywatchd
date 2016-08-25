@@ -60,7 +60,7 @@ def server ( sock ) :
                                 if alarm.name == items[2] :
                                     if metric.full(alarm, interval) :
                                         connection.sendall("state UNKNOWN\n")
-                                    elif alarm.check_thresholds(metric, interval, False) :
+                                    elif alarm.check_thresholds(metric, interval) :
                                         connection.sendall("state WARNING\n")
                                     else :
                                         connection.sendall("state OK\n")
