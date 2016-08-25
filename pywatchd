@@ -1,13 +1,11 @@
 #!/usr/bin/python
 
 from watchd.metrics import aggregated_elb
-from watchd import datastore, server
+from watchd.server import socket_server
+from watchd import datastore
 
 import yaml
 
-import threading
-
-import socket
 import datetime
 import time
 import traceback
@@ -40,16 +38,8 @@ if __name__ == '__main__' :
           fd.write( "%d\n" % newpid )
       os.sys.exit(0)
 
-  sockfile = "/var/run/watchd.sock"
-  if os.path.exists(sockfile) :
-      print "stale watchd socket found, removing"
-      os.unlink( sockfile )
-
-  servsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-  serverthread = threading.Thread(target=server.server, args=( servsock , sockfile ) )
-  serverthread.name = "SocketServer"
-  serverthread.daemon = True
-  serverthread.start()
+  server = socket_server()
+  server.start()
 
   config = 'watchd.yml'
   if not os.path.isfile( config ) :

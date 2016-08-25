@@ -1,14 +1,28 @@
 
 import socket
+import threading
+import os
 
-def server ( sock , sockfile ) :
-    # https://pymotw.com/2/socket/uds.html
+class socket_server ( threading.Thread ) :
 
-    sock.bind(sockfile)
-    sock.listen(1)
+    def __init__ ( self , sockfile="/var/run/watchd.sock" ) :
+        self.name = "SocketServer"
+        self.daemon = True
 
-    while True :
-        connection, client_address = sock.accept()
+        if os.path.exists(sockfile) :
+            print "stale watchd socket found, removing"
+            os.unlink( sockfile )
+
+        self.sock = socket.socket(socket.AF_UNIX)
+
+        self.sock.bind(sockfile)
+        self.sock.listen(1)
+
+    def run ( self ) :
+      # https://pymotw.com/2/socket/uds.html
+
+      while True :
+        connection, client_address = self.sock.accept()
 
         try:
 
