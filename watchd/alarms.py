@@ -1,4 +1,6 @@
 
+from watchd import actions
+
 class alarm :
 
     def __init__ ( self , params , metric ) :
@@ -12,7 +14,7 @@ class alarm :
         self.interval = interval * 60
         self.cooldown = cooldown * 60
         self.statistics = params['statistics']
-        self.action = get_action( params['action'] , metric.name , self )
+        self.action = actions.get( params['action'] , metric.name , self )
 
     def check_thresholds ( self , metric , interval ) :
         for statistic in self.statistics :
