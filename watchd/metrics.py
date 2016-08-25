@@ -383,14 +383,3 @@ class aggregated_elb ( aggregated_metric ) :
     def __str__ ( self ) :
         return "elb: %s/%s , %s" % ( self.healthy , self.count , aggregated_metric.__str__(self) )
 
-def cooldown ( alarm , period , msg=None ) :
-    lockfile = "/tmp/%s.lock" % alarm
-    if os.path.isfile( lockfile ) :
-        stat = os.stat( lockfile )
-        if time.time() - stat.st_mtime < period :
-            return True
-    if not msg :
-        msg = "%d cooldown activated" % time.time()
-    with open( lockfile , 'w' ) as fd :
-        fd.write( msg )
-

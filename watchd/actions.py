@@ -1,6 +1,9 @@
 
 import boto.ec2.autoscale
 
+import time
+import os
+
 def get ( action , metric_name , alarm ) :
     action , param = action.split(':',1)
     if action == 'autoscale' :
@@ -24,8 +27,17 @@ class action :
             self.thread = threading.Thread(target=self.execute, args=( groupname ,) )
             self.thread.start()
 
-    def cooldown( self ) :
-        return cooldown( self.name , self.period )
+    def cooldown( self , msg=None ) :
+        lockfile = "/tmp/%s.lock" % self.name
+        if os.path.isfile( lockfile ) :
+            stat = os.stat( lockfile )
+            if time.time() - stat.st_mtime < self.period :
+                return True
+        if not msg :
+            msg = "%d cooldown activated" % time.time()
+        with open( lockfile , 'w' ) as fd :
+            fd.write( msg )
+
 
 class autoscale_action ( action ) :
 
