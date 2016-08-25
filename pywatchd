@@ -1,19 +1,17 @@
 #!/usr/bin/python
 
 from watchd.metrics import aggregated_elb
+from watchd import datastore
 
 import boto.ec2
 import boto.ec2.elb
 
 import yaml
 
-import socket
 import datetime
 import time
 import traceback
 import os
-
-unixsock = '/var/run/collectd-unixsock'
 
 collectd_types = """
 aggregated_metric average:GAUGE:0:U sigma:GAUGE:0:U one_tenth:GAUGE:0:U five_mins:GAUGE:0:U
@@ -54,8 +52,7 @@ if __name__ == '__main__' :
   while True :
 
    for metric in metrics :
-    sock = socket.socket( socket.AF_UNIX )
-    sock.connect( unixsock )
+    sock = datastore.collectd()
 
     try :
       metric.update( sock )
