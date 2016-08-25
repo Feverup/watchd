@@ -12,31 +12,6 @@ import datetime
 import time
 import os
 
-def collectd( sock , payload , command='GETVAL' , buffsize=1024 ) :
-    sock.send("%s %s\n" % (command,payload))
-    data = sock.recv(buffsize)
-    while data.find(' ') < 0 :
-        data += sock.recv(buffsize)
-    size = data.split()[0]
-    if size == '-1' :
-      size = 0
-    size = int(size) + 2 # Add header and trailing newline
-    while len(data.split('\n')) < size :
-        while data[-1] != "\n" :
-            data += sock.recv(buffsize)
-        if len(data.split('\n')) < size :
-            data += sock.recv(buffsize)
-    items = data.split('\n')
-    items.pop() # Remove trailing endline
-    response_size , status_line = items.pop(0).split(None, 1)
-    if size == 2 :
-        if response_size == '-1' :
-            os.sys.stderr.write( "ERROR : %s , '%s %s' gave %s\n" % ( datetime.datetime.now() , command , payload , status_line ) )
-        return
-    elif size == 3 :
-        return items[0]
-    return items
-
 class weighted ( float ) :
 
     def __new__ ( cls , value , weight ) :
@@ -326,7 +301,7 @@ class aggregated_elb ( aggregated_metric ) :
         self.extreme_clean()
         for hostname in self.hostnames(date) :
             for metric in self.metric_list :
-                data = collectd(sock, "%s/%s" % (hostname,metric))
+                data = sock.send("%s/%s" % (hostname,metric))
                 if data :
                     self[date] = data.split('=')[1]
 
@@ -394,7 +369,7 @@ class aggregated_elb ( aggregated_metric ) :
         output  = '"%s/%s/%s" ' % ( self.elbname , self.alias , self.__class__.__name__ )
         output += "%s:%f:%f:%f:%f" % ( self.tstamp , self.average(interval) , self.sigma(interval) , self.one_tenth(interval) , self.five_mins(interval) )
         output += ":%s:%s" % ( self.nodes_out(interval) , self.count )
-        collectd(sock, output, command='PUTVAL')
+        sock.send( output, command='PUTVAL')
 
     def dump ( self , interval ) :
         output = "%s %s " % ( self.nodes_out(interval) , self.count )
