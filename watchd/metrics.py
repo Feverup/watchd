@@ -12,6 +12,11 @@ import datetime
 import time
 import os
 
+def statistic ( func ) :
+    def wrapper ( self , interval ) :
+        return func(self, interval)
+    return wrapper
+
 class weighted ( float ) :
 
     def __new__ ( cls , value , weight ) :
@@ -140,27 +145,34 @@ class aggregated_metric ( dict ) :
         if self.full(alarm, interval) :
             alarm.check_thresholds(self, interval)
 
+    @statistic
     def average ( self , interval ) :
       return self.mean(interval)[0]
 
+    @statistic
     def sigma ( self , interval ) :
       return self.mean(interval)[1]
 
+    @statistic
     def two_sigma ( self , interval ) :
       mean , sd = self.mean(interval)
       return mean + 2 * sd
 
+    @statistic
     def sigma_down ( self , interval ) :
       mean , sd = self.mean(interval)
       return mean - 2 * sd
 
+    @statistic
     def one_tenth ( self , interval ) :
       return self.quantile(0.9, interval)
 
+    @statistic
     # prediction will use all collected values
     def five_mins ( self , interval ) :
       return self.predict(5*60)
 
+    @statistic
     def minmax ( self , interval ) :
         data = self.last(interval)
         if not data :
@@ -334,36 +346,43 @@ class aggregated_elb ( aggregated_metric ) :
     def check_date ( self , date ) :
         return date - self.date > 70
 
+    @statistic
     def average ( self , interval ) :
         if not self.healthy :
             return float('nan')
         return aggregated_metric.average( self , interval ) / self.healthy
 
+    @statistic
     def sigma ( self , interval ) :
         if not self.healthy :
             return float('nan')
         return aggregated_metric.sigma( self , interval ) / self.healthy
 
+    @statistic
     def two_sigma ( self , interval ) :
         if not self.healthy :
             return float('nan')
         return aggregated_metric.two_sigma( self , interval ) / self.healthy
 
+    @statistic
     def sigma_down ( self , interval ) :
         if not self.healthy :
             return float('nan')
         return aggregated_metric.sigma_down( self , interval ) / self.healthy
 
+    @statistic
     def one_tenth ( self , interval ) :
         if not self.healthy :
             return float('nan')
         return aggregated_metric.one_tenth( self , interval ) / self.healthy
 
+    @statistic
     def five_mins ( self , interval ) :
         if not self.healthy :
             return float('nan')
         return aggregated_metric.five_mins( self , interval ) / self.healthy
 
+    @statistic
     def nodes_out ( self , interval ) :
         if not self.healthy :
             return self.count
