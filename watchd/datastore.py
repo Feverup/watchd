@@ -7,8 +7,14 @@ class collectd :
         self.sock = socket.socket( socket.AF_UNIX )
         self.sock.connect( sockname )
 
-    def send( self , payload , command='GETVAL' , buffsize=1024 ) :
-        self.sock.send("%s %s\n" % (command,payload))
+    def get ( self , payload ) :
+        return self.__send("GETVAL %s\n" % payload)
+
+    def put ( self , payload ) :
+        return self.__send("PUTVAL %s\n" % payload)
+
+    def __send ( self , payload , buffsize=1024 ) :
+        self.sock.send( payload )
         data = self.sock.recv(buffsize)
         while data.find(' ') < 0 :
             data += self.sock.recv(buffsize)

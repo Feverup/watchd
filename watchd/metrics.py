@@ -301,7 +301,7 @@ class aggregated_elb ( aggregated_metric ) :
         self.extreme_clean()
         for hostname in self.hostnames(date) :
             for metric in self.metric_list :
-                data = sock.send("%s/%s" % (hostname,metric))
+                data = sock.get("%s/%s" % (hostname,metric))
                 if data :
                     self[date] = data.split('=')[1]
 
@@ -369,7 +369,7 @@ class aggregated_elb ( aggregated_metric ) :
         output  = '"%s/%s/%s" ' % ( self.elbname , self.alias , self.__class__.__name__ )
         output += "%s:%f:%f:%f:%f" % ( self.tstamp , self.average(interval) , self.sigma(interval) , self.one_tenth(interval) , self.five_mins(interval) )
         output += ":%s:%s" % ( self.nodes_out(interval) , self.count )
-        sock.send( output, command='PUTVAL')
+        sock.put( output )
 
     def dump ( self , interval ) :
         output = "%s %s " % ( self.nodes_out(interval) , self.count )
