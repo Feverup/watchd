@@ -9,8 +9,10 @@ class socket_server ( threading.Thread ) :
         self.name = "SocketServer"
         self.daemon = True
 
+        self.sockfile = sockfile
+
         if os.path.exists(sockfile) :
-            print "stale watchd socket found, removing"
+            os.sys.stdout.write( "stale watchd socket found, removing\n" )
             os.unlink( sockfile )
 
         self.sock = socket.socket(socket.AF_UNIX)
@@ -20,6 +22,10 @@ class socket_server ( threading.Thread ) :
             self.sock.listen(1)
         except socket.error, ex :
             os.sys.stderr.write( "ERROR : cannot listen to socket: %s\n" % ex )
+
+    def close ( self ) :
+        self.sock.close()
+        os.unlink( self.sockfile )
 
     def run ( self ) :
       # https://pymotw.com/2/socket/uds.html
