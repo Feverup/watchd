@@ -14,7 +14,7 @@ import os
 
 def metric ( cls ) :
     for name, method in cls.__dict__.iteritems() :
-        if hasattr(method, '__statistic__') :
+        if hasattr(method, '__statistic__') and name not in cls._statistics :
             cls._statistics.append( name )
     return cls
 
