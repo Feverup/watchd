@@ -1,5 +1,4 @@
 
-from fevertools import elb_group, fever_config
 from watchd import alarms
 
 import urllib, urllib2
