@@ -38,7 +38,9 @@ if __name__ == '__main__' :
           fd.write( "%d\n" % newpid )
       os.sys.exit(0)
 
-  server = socket_server()
+  state = { 'serving':True }
+
+  server = socket_server(state)
   server.start()
 
   config = 'watchd.yml'
@@ -46,8 +48,6 @@ if __name__ == '__main__' :
       conf_file = os.path.join( '/etc' , config )
   with open( config ) as fd :
       config = yaml.load( fd )
-
-  state = { 'serving':True }
 
   metrics = []
   for name in config :

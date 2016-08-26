@@ -5,12 +5,13 @@ import os
 
 class socket_server ( threading.Thread ) :
 
-    def __init__ ( self , sockfile="/var/run/watchd.sock" ) :
+    def __init__ ( self , mainthread , sockfile="/var/run/watchd.sock" ) :
         threading.Thread.__init__(self)
         self.name = "SocketServer"
         self.daemon = True
 
         self.sockfile = sockfile
+        self.state = mainthread
 
         if os.path.exists(sockfile) :
             os.sys.stdout.write( "stale watchd socket found, removing\n" )
@@ -53,7 +54,7 @@ class socket_server ( threading.Thread ) :
                             connection.sendall("metrics %s\n"%", ".join([m.name for m in metrics]))
                     elif items[0] == "KILL" :
                         connection.sendall("stopping\n")
-                        state['serving'] = False
+                        self.state['serving'] = False
                         break
                     elif items[0] == "GETVAL" and len(items) == 2 :
                         metric = [ m for m in metrics if m.elbname == items[1] ]
