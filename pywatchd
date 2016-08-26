@@ -142,10 +142,11 @@ if __name__ == '__main__' :
   for name in config :
       metrics.append( aggregated_elb(name, config) )
 
+  sock = datastore.collectd()
+
   while state['serving'] :
 
    for metric in metrics :
-    sock = datastore.collectd()
 
     try :
       metric.update( sock )
