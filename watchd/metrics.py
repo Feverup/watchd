@@ -15,7 +15,7 @@ import os
 def metric ( cls ) :
     for name, method in cls.__dict__.iteritems() :
         if hasattr(method, '__statistic__') :
-            cls.statistics.append( name )
+            cls._statistics.append( name )
     return cls
 
 def statistic ( func ) :
@@ -104,7 +104,7 @@ class alarm :
 @metric
 class aggregated_metric ( dict ) :
 
-    statistics = []
+    _statistics = []
 
     def __init__ ( self , name , conf , window=5 , length=10 ) :
         config = conf[name]
@@ -119,6 +119,9 @@ class aggregated_metric ( dict ) :
         for params in config['alarms'] :
             self.alarms.append( alarm(params, self) )
         dict.__init__( self )
+
+    def statistics ( self ) :
+        return self._statistics
 
     def unshift ( self ) :
         keys = self.keys()
