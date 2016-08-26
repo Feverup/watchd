@@ -1,6 +1,12 @@
 
 from watchd import actions
 
+import math
+
+def sign ( value ) :
+    floatsign = math.copysign(1, value)
+    return int(floatsign)
+
 class alarm :
 
     def __init__ ( self , params , metric ) :

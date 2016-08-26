@@ -85,10 +85,6 @@ class cpu ( dict ) :
     def __str__ ( self ) :
         return " ".join( [ "%5.2f" % self[k] for k in self.types ] )
 
-def sign ( value ) :
-    floatsign = math.copysign(1, value)
-    return int(floatsign)
-
 class aggregated_metric ( dict ) :
 
     def __init__ ( self , name , conf , window=5 , length=10 ) :
@@ -282,7 +278,7 @@ class aggregated_elb ( aggregated_metric ) :
             if elbinstance.get_tags().has_key(tagname) :
                 print "WARNING : thresholds for %s %s defined on ELB tags as %s, values from configuration file will be ignored" % ( self.name , alarm.name , elbinstance.get_tags()[tagname] )
                 for statistic in alarm.statistics :
-                    statistic['threshold'] = sign(statistic['threshold']) * float(elbinstance.get_tags()[tagname])
+                    statistic['threshold'] = alarms.sign(statistic['threshold']) * float(elbinstance.get_tags()[tagname])
 
     def input_value ( self , datastr ) :
         if not self.healthy :
