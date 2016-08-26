@@ -6,6 +6,7 @@ import os
 class socket_server ( threading.Thread ) :
 
     def __init__ ( self , sockfile="/var/run/watchd.sock" ) :
+        threading.Thread.__init__(self)
         self.name = "SocketServer"
         self.daemon = True
 
