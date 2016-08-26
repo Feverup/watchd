@@ -54,7 +54,7 @@ class socket_server ( threading.Thread ) :
                             connection.sendall("metrics %s\n"%", ".join([m.name for m in self.state['metrics']]))
                     elif items[0] == "KILL" :
                         connection.sendall("stopping\n")
-                        self.self.state['serving'] = False
+                        self.state['serving'] = False
                         break
                     elif items[0] == "GETVAL" and len(items) == 2 :
                         metric = [ m for m in self.state['metrics'] if m.elbname == items[1] ]
