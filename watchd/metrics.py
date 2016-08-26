@@ -1,7 +1,5 @@
 
-from fevertools import elb_group, fever_config
-
-import boto.ec2.autoscale
+from watchd import alarms
 
 import urllib, urllib2
 import uuid
@@ -61,34 +59,6 @@ class cpu ( dict ) :
     def __str__ ( self ) :
         return " ".join( [ "%5.2f" % self[k] for k in self.types ] )
 
-def sign ( value ) :
-    floatsign = math.copysign(1, value)
-    return int(floatsign)
-
-class alarm :
-
-    def __init__ ( self , params , metric ) :
-        self.name = params['alarm']
-        interval = params.get('interval', metric.window)
-        if max( interval , metric.length ) == interval :
-            metric.length = interval + 5
-        cooldown = params.get('cooldown', metric.window)
-        if max( interval , cooldown ) == interval :
-            cooldown = interval
-        self.interval = interval * 60
-        self.cooldown = cooldown * 60
-        self.statistics = params['statistics']
-        self.action = get_action( params['action'] , metric.name , self )
-
-    def check_thresholds ( self , metric , interval ) :
-        for statistic in self.statistics :
-            methods = [ getattr(metric, s) for s in statistic['methods'] ]
-            values = [ method(interval) for method in methods ]
-            if [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] :
-                self.action.run( elb_group(metric.elbname) )
-                return True
-        return False
-
 class aggregated_metric ( dict ) :
 
     def __init__ ( self , name , conf , window=5 , length=10 ) :
@@ -102,7 +72,7 @@ class aggregated_metric ( dict ) :
         self.length = length
         self.alarms = []
         for params in config['alarms'] :
-            self.alarms.append( alarm(params, self) )
+            self.alarms.append( alarms.alarm(params, self) )
         dict.__init__( self )
 
     def unshift ( self ) :
@@ -282,7 +252,7 @@ class aggregated_elb ( aggregated_metric ) :
             if elbinstance.get_tags().has_key(tagname) :
                 print "WARNING : thresholds for %s %s defined on ELB tags as %s, values from configuration file will be ignored" % ( self.name , alarm.name , elbinstance.get_tags()[tagname] )
                 for statistic in alarm.statistics :
-                    statistic['threshold'] = sign(statistic['threshold']) * float(elbinstance.get_tags()[tagname])
+                    statistic['threshold'] = alarms.sign(statistic['threshold']) * float(elbinstance.get_tags()[tagname])
 
     def input_value ( self , datastr ) :
         if not self.healthy :
@@ -382,108 +352,4 @@ class aggregated_elb ( aggregated_metric ) :
 
     def __str__ ( self ) :
         return "elb: %s/%s , %s" % ( self.healthy , self.count , aggregated_metric.__str__(self) )
-
-def cooldown ( alarm , period , msg=None ) :
-    lockfile = "/tmp/%s.lock" % alarm
-    if os.path.isfile( lockfile ) :
-        stat = os.stat( lockfile )
-        if time.time() - stat.st_mtime < period :
-            return True
-    if not msg :
-        msg = "%d cooldown activated" % time.time()
-    with open( lockfile , 'w' ) as fd :
-        fd.write( msg )
-
-def get_action ( action , metric_name , alarm ) :
-    action , param = action.split(':',1)
-    if action == 'autoscale' :
-        return autoscale_action( metric_name , alarm , param )
-    elif action == 'http' :
-        return http_action( metric_name , alarm , param )
-    elif action == 'post' :
-        return post_action( metric_name , alarm , param )
-    raise Exception( "ERROR: action '%s' unknown" % action )
-
-class action :
-
-    def __init__ ( self , metric_name , alarm ) :
-        self.name = "%s-%s" % ( metric_name , alarm.name )
-        self.period = alarm.cooldown
-        self.metric = metric_name
-        self.alarm = alarm.name
-
-    def run ( self , groupname ) :
-        if not self.cooldown() :
-            self.thread = threading.Thread(target=self.execute, args=( groupname ,) )
-            self.thread.start()
-
-    def cooldown( self ) :
-        return cooldown( self.name , self.period )
-
-class autoscale_action ( action ) :
-
-    name = 'autoscale'
-
-    def __init__ ( self , metric_name , alarm_name , policy ) :
-        action.__init__( self , metric_name , alarm_name )
-        self.policy = policy
-
-    def execute ( self , groupname ) :
-        autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
-        try :
-            autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
-        except boto.exception.BotoServerError , ex :
-            os.sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
-
-    def __str__ ( self ) :
-        return "AWS autoscale action (policy %s)" % self.policy
-
-class http_action ( action ) :
-
-    name = 'http'
-
-    def __init__ ( self , metric_name , alarm_name , url ) :
-        action.__init__( self , metric_name , alarm_name )
-        self.url = "http:%s" % url
-
-    def execute ( self , groupname ) :
-        url = self.url.format( groupname=groupname , production=fever_config()['production'] )
-        try :
-            res = urllib2.urlopen(url)
-            if res.getcode() != 200 :
-                os.sys.stdout.write( "WARNING : %s returned '%s'\n" % ( url , res.getcode() ) )
-        except urllib2.URLError , ex :
-            os.sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( url , ex.reason ) )
-
-    def __str__ ( self ) :
-        return "GET action (%s)" % self.url
-
-class post_action ( action ) :
-
-    name = 'post'
-
-    payload = """{
-  "Type" : "watchd",
-  "id":"%s",
-  "tstamp":"%s",
-  "validated" : true,
-  "metric" : "%s",
-  "alarm" : "%s"
-}"""
-
-    def __init__ ( self , metric_name , alarm_name , url ) :
-        action.__init__( self , metric_name , alarm_name )
-        self.url = "http://%s/" % url
-
-    def execute ( self , groupname ) :
-        data = self.payload % ( uuid.uuid1() , datetime.datetime.now() , groupname , self.alarm )
-        try :
-            res = urllib2.urlopen(self.url, data)
-            if res.getcode() not in ( 200 , 202 ) :
-                os.sys.stdout.write( "WARNING : %s returned '%s'\n" % ( res.geturl() , res.getcode() ) )
-        except urllib2.URLError , ex :
-            os.sys.stdout.write( "WARNING : cannot contact '%s' : %s\n" % ( self.url , ex.reason ) )
-
-    def __str__ ( self ) :
-        return "POST action (%s)" % self.url
 
