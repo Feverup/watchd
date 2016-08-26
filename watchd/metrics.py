@@ -120,6 +120,10 @@ class aggregated_metric ( dict ) :
       mean , sd = self.mean(interval)
       return mean + 2 * sd
 
+    def one_sigma ( self , interval ) :
+      mean , sd = self.mean(interval)
+      return mean + sd
+
     def sigma_down ( self , interval ) :
       mean , sd = self.mean(interval)
       return mean - 2 * sd
@@ -318,6 +322,11 @@ class aggregated_elb ( aggregated_metric ) :
         if not self.healthy :
             return float('nan')
         return aggregated_metric.two_sigma( self , interval ) / self.healthy
+
+    def one_sigma ( self , interval ) :
+        if not self.healthy :
+            return float('nan')
+        return aggregated_metric.one_sigma( self , interval ) / self.healthy
 
     def sigma_down ( self , interval ) :
         if not self.healthy :
