@@ -44,20 +44,20 @@ class socket_server ( threading.Thread ) :
                     items = data[:-1].split()
                     if items[0] == "WHAT" :
                         if len(items) == 2 :
-                            for metric in metrics :
+                            for metric in self.state['metrics'] :
                                 if metric.elbname == items[1] :
                                     connection.sendall("alarms %s\n" % ", ".join([a.name for a in metric.alarms]))
                                     break
                             else :
                                 connection.sendall("error bad metric\n")
                         else :
-                            connection.sendall("metrics %s\n"%", ".join([m.name for m in metrics]))
+                            connection.sendall("metrics %s\n"%", ".join([m.name for m in self.state['metrics']]))
                     elif items[0] == "KILL" :
                         connection.sendall("stopping\n")
-                        self.state['serving'] = False
+                        self.self.state['serving'] = False
                         break
                     elif items[0] == "GETVAL" and len(items) == 2 :
-                        metric = [ m for m in metrics if m.elbname == items[1] ]
+                        metric = [ m for m in self.state['metrics'] if m.elbname == items[1] ]
                         if len(metric) == 1 :
                             metric = metric[0]
                             interval = 60 * metric.window
@@ -66,7 +66,7 @@ class socket_server ( threading.Thread ) :
                         else :
                             connection.sendall("error bad metric\n")
                     elif items[0] == "GETTHRESHOLD" and len(items) == 3 :
-                        metric = [ m for m in metrics if m.elbname == items[1] ]
+                        metric = [ m for m in self.state['metrics'] if m.elbname == items[1] ]
                         if len(metric) == 1 :
                             metric = metric[0]
                             for alarm in metric.alarms :
@@ -79,7 +79,7 @@ class socket_server ( threading.Thread ) :
                         else :
                             connection.sendall("error bad metric\n")
                     elif items[0] == "STATE" and len(items) == 3 :
-                        metric = [ m for m in metrics if m.elbname == items[1] ]
+                        metric = [ m for m in self.state['metrics'] if m.elbname == items[1] ]
                         if len(metric) == 1 :
                             metric = metric[0]
                             interval = 60 * metric.window
