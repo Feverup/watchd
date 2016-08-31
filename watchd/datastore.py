@@ -23,12 +23,14 @@ class collectd :
             self.sock.send( payload )
         except socket.error, ex :
             sys.stderr.write( "ERROR : %s , socket failed to send; %s\n" % ( datetime.datetime.now() , ex ) )
+            return
         try :
             data = self.sock.recv(buffsize)
             while data.find(' ') < 0 :
                 data += self.sock.recv(buffsize)
         except socket.error, ex :
             sys.stderr.write( "ERROR : %s , socket failed to read; %s\n" % ( datetime.datetime.now() , ex ) )
+            return
         size = data.split()[0]
         if size == '-1' :
           size = 0
