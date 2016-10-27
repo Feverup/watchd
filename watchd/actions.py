@@ -48,9 +48,9 @@ class autoscale_action ( action ) :
 
     name = 'autoscale'
 
-    def __init__ ( self , metric_name , alarm_name , policy ) :
+    def __init__ ( self , metric_name , alarm_name , number ) :
         action.__init__( self , metric_name , alarm_name )
-        self.policy = policy
+        self.number = int(number)
 
     def execute ( self , groupname ) :
         try :
@@ -84,7 +84,7 @@ class autoscale_action ( action ) :
             os.sys.stdout.write( "WARNING : scaling error : %s\n" % ex )
 
     def __str__ ( self ) :
-        return "AWS autoscale action (policy %s)" % self.policy
+        return "Scale action (#%s instances)" % self.number
 
 class http_action ( action ) :
 
