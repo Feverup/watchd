@@ -59,7 +59,7 @@ class autoscale_action ( action ) :
             name = "%s-self-auto" % groupname
             arglist = [ "--self" , "--spot" , "--monitor" , "-t" , groupname ]
             arglist.extend( ( "-s" , stage , "-r" , groupname ) )
-            arglist.extend( ( '-n', self.number , name ) )
+            arglist.extend( ( '-n', str(self.number) , name ) )
             args = get_parser( 'ec2' ).parse_args(arglist)
 
             tpl = ec2_template(args)
