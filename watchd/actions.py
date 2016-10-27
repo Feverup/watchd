@@ -1,7 +1,6 @@
 
 from fevertools import fever_config
-
-import boto.ec2.autoscale
+from fevertools import get_parser, ec2_template
 
 import uuid
 import threading
@@ -54,11 +53,35 @@ class autoscale_action ( action ) :
         self.policy = policy
 
     def execute ( self , groupname ) :
-        autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
         try :
-            autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
-        except boto.exception.BotoServerError , ex :
-            os.sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
+            stage = fever_config()['production']
+
+            name = "%s-self-auto" % groupname
+            arglist = [ "--self" , "--spot" , "--monitor" , "-t" , groupname ]
+            arglist.extend( ( "-s" , stage , "-r" , groupname ) )
+            arglist.extend( ( '-n', self.number , name ) )
+            args = get_parser( 'ec2' ).parse_args(arglist)
+
+            tpl = ec2_template(args)
+            start = datetime.datetime.now()
+            instances = tpl.do_instantiation(start, args)
+            aws_initialization( instances )
+            nodes = tpl.set_names( args , instances )
+            threadlist = []
+            for i in instances :
+                tpl.write_vars( i.private_dns_name.split('.')[0] )
+                i.add_tag('Node', role)
+                i.add_tag('Stage', stage)
+                threadlist.append( aws_startup( i , nodes[i.id][0] , nodes[i.id][1] ) )
+                threadlist[-1].start()
+
+            for thr in threadlist :
+                thr.join()
+                if not thr.ready :
+                    thr.instance.terminate()
+
+        except Exception , ex :
+            os.sys.stdout.write( "WARNING : scaling error : %s\n" % ex )
 
     def __str__ ( self ) :
         return "AWS autoscale action (policy %s)" % self.policy
