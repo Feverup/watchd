@@ -72,7 +72,7 @@ class http_action ( action ) :
         self.url = "http:%s" % url
 
     def execute ( self , groupname ) :
-        url = self.url.format( groupname=groupname , production=fever_config()['production'] )
+        url = self.url.format( groupname=groupname , production=fever_config('production') )
         try :
             res = urllib2.urlopen(url)
             if res.getcode() != 200 :
