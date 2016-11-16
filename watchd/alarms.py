@@ -1,8 +1,6 @@
 
 from watchd import actions
 
-from fevertools import elb_group
-
 import math
 
 def sign ( value ) :
@@ -29,7 +27,7 @@ class alarm :
             methods = [ getattr(metric, s) for s in statistic['methods'] ]
             values = [ method(interval) for method in methods ]
             if [ v for v in values if not math.isnan(v) and cmp(v, abs(statistic['threshold'])) == sign(statistic['threshold']) ] :
-                self.action.run( elb_group(metric.elbname) )
+                self.action.run( metric.name )
                 return True
         return False
 

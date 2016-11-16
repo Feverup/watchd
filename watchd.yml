@@ -5,7 +5,6 @@ backend:
   metric_list:
     - cpu-0/cpu-idle
     - cpu-1/cpu-idle
-  elbname: front-balancer
   alarms:
     - alarm: high
       statistics:
@@ -29,7 +28,6 @@ recommender:
   logfile: true
   metric_list:
     - cpu-0/cpu-idle
-  elbname: recommender
   alarms:
     - alarm: high
       interval: 5

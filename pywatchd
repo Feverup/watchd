@@ -37,7 +37,7 @@ def server ( sock ) :
                     if items[0] == "WHAT" :
                         if len(items) == 2 :
                             for metric in metrics :
-                                if metric.elbname == items[1] :
+                                if metric.name == items[1] :
                                     connection.sendall("alarms %s\n" % ", ".join([a.name for a in metric.alarms]))
                                     break
                             else :
@@ -49,7 +49,7 @@ def server ( sock ) :
                         state['serving'] = False
                         break
                     elif items[0] == "GETVAL" and len(items) == 2 :
-                        metric = [ m for m in metrics if m.elbname == items[1] ]
+                        metric = [ m for m in metrics if m.name == items[1] ]
                         if len(metric) == 1 :
                             metric = metric[0]
                             interval = 60 * metric.window
@@ -58,7 +58,7 @@ def server ( sock ) :
                         else :
                             connection.sendall("error bad metric\n")
                     elif items[0] == "GETTHRESHOLD" and len(items) == 3 :
-                        metric = [ m for m in metrics if m.elbname == items[1] ]
+                        metric = [ m for m in metrics if m.name == items[1] ]
                         if len(metric) == 1 :
                             metric = metric[0]
                             for alarm in metric.alarms :
@@ -71,7 +71,7 @@ def server ( sock ) :
                         else :
                             connection.sendall("error bad metric\n")
                     elif items[0] == "STATE" and len(items) == 3 :
-                        metric = [ m for m in metrics if m.elbname == items[1] ]
+                        metric = [ m for m in metrics if m.name == items[1] ]
                         if len(metric) == 1 :
                             metric = metric[0]
                             interval = 60 * metric.window

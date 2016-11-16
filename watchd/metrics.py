@@ -246,11 +246,10 @@ class aggregated_elb ( aggregated_metric ) :
     def __init__ ( self , name , conf , window=5 , length=10 ) :
         self.count = None
         self.healthy = None
-        self.elbname = conf[name]['elbname']
         aggregated_metric.__init__ ( self , name , conf , window , length )
         self.date = None
         elbinstance = boto.ec2.elb.connect_to_region("eu-west-1") \
-                                .get_all_load_balancers([self.elbname])[0]
+                                .get_all_load_balancers([self.name])[0]
         for alarm in self.alarms :
             tagname = "%s-%s" % ( alarm.name , self.alias )
             if elbinstance.get_tags().has_key(tagname) :
@@ -285,12 +284,12 @@ class aggregated_elb ( aggregated_metric ) :
 
         self.submit(sock, 60*self.window)
         if len(self.last(60*self.window)) and self.logfile :
-            with open( '%s.out' % self.elbname , 'a+' ) as fd :
+            with open( '%s.out' % self.name , 'a+' ) as fd :
                 fd.write( "%s %14.2f %s\n" % ( datetime.datetime.now() , date , self.dump(60*self.window) ) )
 
     def hostnames ( self , date ) :
         instances = boto.ec2.elb.connect_to_region("eu-west-1") \
-                                .get_all_load_balancers([self.elbname])[0] \
+                                .get_all_load_balancers([self.name])[0] \
                                 .get_instance_health()
         in_service = [ i.instance_id for i in instances if i.state == 'InService' ]
         if self.count != len(instances) or self.healthy != len(in_service):
@@ -349,7 +348,7 @@ class aggregated_elb ( aggregated_metric ) :
         return self.count - self.healthy
 
     def submit ( self , sock, interval ) :
-        output  = '"%s/%s/%s" ' % ( self.elbname , self.alias , self.__class__.__name__ )
+        output  = '"%s/%s/%s" ' % ( self.name , self.alias , self.__class__.__name__ )
         output += "%s:%f:%f:%f:%f" % ( self.tstamp , self.average(interval) , self.sigma(interval) , self.one_tenth(interval) , self.five_mins(interval) )
         output += ":%s:%s" % ( self.nodes_out(interval) , self.count )
         sock.put( output )

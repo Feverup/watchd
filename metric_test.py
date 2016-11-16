@@ -41,8 +41,8 @@ class test_weighted ( watchd.metrics.weighted_metric ) :
 tol = 1e-4
 
 if __name__ == "__main__" :
-    config = { 'standard_test': { 'metric_list':'' , 'elbname':'' , 'alarms': [ { 'alarm':'test' ,  'statistics':'' , 'action':'autoscale:' } ] },
-               'weight_test':   { 'metric_list':'' , 'elbname':'' , 'alarms': [ { 'alarm':'test' , 'statistics':'' , 'action':'autoscale:' } ] }
+    config = { 'standard_test': { 'metric_list':'' , 'alarms': [ { 'alarm':'test' ,  'statistics':'' , 'action':'autoscale:' } ] },
+               'weight_test':   { 'metric_list':'' , 'alarms': [ { 'alarm':'test' , 'statistics':'' , 'action':'autoscale:' } ] }
                }
 
     metric = test_metric.from_datastream ( 'standard_test' , config , stream1 , stream2 , stream3 , stream4 )
