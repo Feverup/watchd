@@ -1,6 +1,5 @@
 
 from fevertools import fever_config
-from fevertools import get_parser, ec2_template
 
 import uuid
 import threading
@@ -48,43 +47,21 @@ class autoscale_action ( action ) :
 
     name = 'autoscale'
 
-    def __init__ ( self , metric_name , alarm_name , number ) :
+    def __init__ ( self , metric_name , alarm_name , count ) :
         action.__init__( self , metric_name , alarm_name )
-        self.number = int(number)
+        self.count = count
 
     def execute ( self , groupname ) :
+        url = "http://mgmnt.feverup.com:8000/autoscale/%s/%s" % ( groupname , self.count )
         try :
-            stage = fever_config()['production']
-
-            name = "%s-self-auto" % groupname
-            arglist = [ "--self" , "--spot" , "--monitor" , "-t" , groupname ]
-            arglist.extend( ( "-s" , stage , "-r" , groupname ) )
-            arglist.extend( ( '-n', str(self.number) , name ) )
-            args = get_parser( 'ec2' ).parse_args(arglist)
-
-            tpl = ec2_template(args)
-            start = datetime.datetime.now()
-            instances = tpl.do_instantiation(start, args)
-            aws_initialization( instances )
-            nodes = tpl.set_names( args , instances )
-            threadlist = []
-            for i in instances :
-                tpl.write_vars( i.private_dns_name.split('.')[0] )
-                i.add_tag('Node', role)
-                i.add_tag('Stage', stage)
-                threadlist.append( aws_startup( i , nodes[i.id][0] , nodes[i.id][1] ) )
-                threadlist[-1].start()
-
-            for thr in threadlist :
-                thr.join()
-                if not thr.ready :
-                    thr.instance.terminate()
-
+            res = urllib2.urlopen(url)
+            if res.getcode() != 201 :
+                os.sys.stdout.write( "WARNING : %s returned '%s'\n" % ( url , res.getcode() ) )
         except Exception , ex :
             os.sys.stdout.write( "WARNING : scaling error : %s\n" % ex )
 
     def __str__ ( self ) :
-        return "Scale action (#%s instances)" % self.number
+        return "Scale action (#%s instances)" % self.count
 
 class http_action ( action ) :
 
