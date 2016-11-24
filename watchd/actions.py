@@ -1,8 +1,6 @@
 
 from fevertools import fever_config
 
-import boto.ec2.autoscale
-
 import uuid
 import threading
 import datetime
@@ -49,19 +47,21 @@ class autoscale_action ( action ) :
 
     name = 'autoscale'
 
-    def __init__ ( self , metric_name , alarm_name , policy ) :
+    def __init__ ( self , metric_name , alarm_name , count ) :
         action.__init__( self , metric_name , alarm_name )
-        self.policy = policy
+        self.count = count
 
     def execute ( self , groupname ) :
-        autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
+        url = "http://mgmnt.feverup.com:8000/autoscale/%s/%s" % ( groupname , self.count )
         try :
-            autoscale.execute_policy( self.policy , as_group=groupname , honor_cooldown=1 )
-        except boto.exception.BotoServerError , ex :
-            os.sys.stdout.write( "WARNING : autoscaling error '%s': %s\n" % ( ex.error_code , ex.message ) )
+            res = urllib2.urlopen(url)
+            if res.getcode() != 201 :
+                os.sys.stdout.write( "WARNING : %s returned '%s'\n" % ( url , res.getcode() ) )
+        except Exception , ex :
+            os.sys.stdout.write( "WARNING : scaling error : %s\n" % ex )
 
     def __str__ ( self ) :
-        return "AWS autoscale action (policy %s)" % self.policy
+        return "Scale action (#%s instances)" % self.count
 
 class http_action ( action ) :
 
