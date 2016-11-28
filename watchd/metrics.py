@@ -288,10 +288,17 @@ class aggregated_elb ( aggregated_metric ) :
                 fd.write( "%s %14.2f %s\n" % ( datetime.datetime.now() , date , self.dump(60*self.window) ) )
 
     def hostnames ( self , date ) :
-        instances = boto.ec2.elb.connect_to_region("eu-west-1") \
-                                .get_all_load_balancers([self.name])[0] \
-                                .get_instance_health()
-        in_service = [ i.instance_id for i in instances if i.state == 'InService' ]
+        instances = []
+        in_service = []
+        for i in boto.ec2.elb.connect_to_region("eu-west-1") \
+                             .get_all_load_balancers([self.name])[0] \
+                             .get_instance_health() :
+            if i.reason_code == "N/A" and i.description == "N/A" :
+                instances.append( i )
+                if i.state == 'InService' :
+                    in_service.append( i.instance_id )
+            else :
+                os.sys.stderr.write( "WARNING : Instance %s is in unkown state : %s , %s\n" % ( i.instance_id , i.reason_code , i.description ) )
         if self.count != len(instances) or self.healthy != len(in_service):
             self.date = date
         self.count = len(instances)
