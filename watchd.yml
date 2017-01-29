@@ -1,7 +1,8 @@
 ---
 
 backend:
-  alias: elbload
+  logfile: true
+  alias: load
   metric_list:
     - cpu-0/cpu-idle
     - cpu-1/cpu-idle
@@ -16,33 +17,44 @@ backend:
           methods:
             - five_mins
       action: autoscale:1
+    - alarm: low
+      interval: 30
+      statistics:
+        - threshold: -30
+          methods:
+            - one_sigma
+      action: post:10.0.0.251:8000
     - alarm: out
       statistics:
         - threshold: 1
           methods:
             - nodes_out
-      action: autoscale:1
+      action: autoscale:2
 
 recommender:
-  alias: elbload
   logfile: true
+  alias: load
   metric_list:
     - cpu-0/cpu-idle
   alarms:
     - alarm: high
-      interval: 5
       statistics:
-        - threshold: 80
+        - threshold: 55
           methods:
             - two_sigma
             - one_tenth
       action: autoscale:1
     - alarm: low
-      interval: 25
-      cooldown: 30
+      interval: 30
       statistics:
-        - threshold: -30
+        - threshold: -25
           methods:
-            - sigma_down
+            - one_sigma
       action: post:10.0.0.251:8000
+    - alarm: out
+      statistics:
+        - threshold: 1
+          methods:
+            - nodes_out
+      action: autoscale:2
 
