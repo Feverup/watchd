@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name = 'watchd',
-    version = '1.0',
+    version = '1.0.1',
     description = 'Alarms enabled metric monitoring service',
     license = 'Apache License (2.0)',
     url = 'https://github.com/Feverup/watchd',

@@ -45,7 +45,7 @@ if __name__ == '__main__' :
 
   config = 'watchd.yml'
   if not os.path.isfile( config ) :
-      conf_file = os.path.join( '/etc' , config )
+      config = os.path.join( '/etc' , config )
   with open( config ) as fd :
       config = yaml.load( fd )
 
